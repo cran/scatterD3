@@ -23,13 +23,13 @@ library(scatterD3)
 scatterD3(x = mtcars$wt, y = mtcars$mpg)
 ```
 
-This will display a simple visualization with the given variables as `x` and `y` axis. There are several interactive feature directly available :
+This will display a simple visualization with the given variables as `x` and `y` axis. There are several interactive features directly available :
 
 - you can zoom in and out with the mouse wheel while the mouse cursor is on the plot
 - while zommed in, you can pan the plot by dragging with your mouse
 - by hovering over a point, you can display a small tooltip window giving the `x` and `y` values
 
-You can customize the points size with the `point_size` parameter, their opacity with `point_opacity`, and you can force the plot to have a 1:1 fixed aspect ratio with `fixed=TRUE`.
+You can customize the points size with the `point_size` parameter, their opacity with `point_opacity`, and you can force the plot to have a 1:1 fixed aspect ratio with `fixed = TRUE`.
 
 ```{r basic_cust}
 scatterD3(x = mtcars$wt, y = mtcars$mpg, point_size = 15, point_opacity = 0.5, fixed = TRUE)
@@ -46,7 +46,7 @@ scatterD3(x = mtcars$wt, y = mtcars$mpg, lab = rownames(mtcars), labels_size = 9
 Note that text labels are fully movable : click and drag a label with your mouse to place it where you want. Custom positions are preserved while zooming/panning.
 
 
-## Mapping colors and symbols to variables
+## Mapping colors, symbols and size to variables
 
 By passing vectors to the `col_var` and/or `symbol_var` arguments, you can map points colors and symbols to other variables.
 
@@ -56,10 +56,25 @@ scatterD3(x = mtcars$wt, y = mtcars$mpg, col_var = mtcars$cyl, symbol_var = mtca
 
 Note that when hovering over a legend item with your mouse, the corresponding points are highlighted. Also note that the mapped variables values are automatically added to the default tooltips.
 
+You can also map symbol sizes with a variable with the `size_var` argument. `size_range` allows to customize the sizes range :
+
+```{r map_size}
+scatterD3(x = mtcars$wt, y = mtcars$mpg, col_var = mtcars$cyl, size_var = mtcars$hp, size_range = c(10,1000), point_opacity = 0.7)
+```
+
+## Axis limits
+
+You can manually specify the `x` or `y` axis limits with the `xlim` and `ylim` arguments :
+
+```{r axis_limits}
+scatterD3(x = mtcars$wt, y = mtcars$mpg, xlim=c(0,10), ylim=c(10,35))
+```
+
+
 
 ## Custom axis and legend labels
 
-You can customize the axis and legend labels with the `xlab`, `ylab`, `col_lab` and `symbol_lab` :
+You can customize the axis and legend labels with `xlab`, `ylab`, `col_lab`, `symbol_lab` and `size_lab` :
 
 ```{r cust_labels}
 scatterD3(x = mtcars$wt, y = mtcars$mpg, col_var = mtcars$cyl, symbol_var = mtcars$gear,
@@ -81,43 +96,30 @@ scatterD3(x = mtcars$wt, y = mtcars$mpg, tooltip_text = tooltips)
 
 You can also disable tooltips entirely with `tooltips = FALSE`.
 
-## Shiny integration : additional controls and SVG export
+## Shiny integration
 
-Like every R HTML widget, shiny integration is straightforward. Furthermore, we provide some additional
-handlers to map form controls to SVG export and interactive effects (text size, points opacity and zoom reset).
-You just have to give the following `id` to your form controls :
+### Transitions
 
-- `#scatterD3-size` : text size in points (numerical value)
-- `#scatterD3-opacity` : point ant text opacity (numerical value, 0 to 1)
-- `#scatterD3-resetzoom` : reset zoom to default on click
-- `#scatterD3-download` : link to download the currently displayed figure as an SVG file
+Like every R HTML widget, shiny integration is straightforward. But as a D3 widget, `scatterD3` is *updatable* : changes in settings or data can be displayed via smooth transitions instead of a complete chart redraw, which can provide interesting visual clues.
 
-Here is a minimal working example :
+To a small demonstration of these transitions, you can take a look at the
+[sample scatterD3 shiny app](http://data.nozav.org/app/scatterD3/).
 
-```R
-library(shiny)
-runApp(shinyApp(
-    ui=fluidPage(
-      sidebarLayout(
-        sidebarPanel(
-          numericInput("scatterD3-size", "Labels size :", min = 2, max = 30, value = 10),
-          numericInput("scatterD3-opacity", "Opacity :", min = 0, max = 1, value = 1, step=0.05),
-          actionButton("scatterD3-resetzoom", "Reset Zoom"),
-          tags$a(id="scatterD3-download", href="#", class="btn btn-default", "Download SVG")
-        ),
-        mainPanel(scatterD3Output("scatterPlot"))
-      )
-    ),
-    server = function(input, output) {
-      output$scatterPlot <- renderScatterD3({
-        scatterD3(x=mtcars$wt,
-                  y=mtcars$mpg,
-                  lab=rownames(mtcars),
-                  col_var=mtcars$cyl)
-      })
-    }
-))
-```
+Enabling transitions in your shiny app is quite simple, you just have to add the `transitions = TRUE` argument to your `scatterD3` calls in your shiny server code. There's only one warning : if your shiny application may filter on your dataset rows via a control, then you must provide a `key_var` variable that uniquely and persistently identify your rows.
 
-You can see the result of this [minimal scatterD3 shiny app](https://juba.shinyapps.io/scatterD3_shiny_app) hosted on shinyapps.io.
 
+### Additional controls : Reset zoom and SVG export
+
+Furthermore, `scatterD3` provides some additional handlers to two interactive features : SVG export and zoom resetting.
+
+By default, you just have to give the following `id` to the corresponding form controls :
+
+- `#scatterD3-reset-zoom` : reset zoom to default on click
+- `#scatterD3-svg-export` : link to download the currently displayed figure as an SVG file
+
+If you are not happy with these ids, you can specify their names yourself with the arguments `dom_id_svg_export` and `dom_id_reset_zoom`.
+
+### Sample app and source code
+
+The
+[sample scatterD3 shiny app](http://data.nozav.org/app/scatterD3/) allows you to see the different features described here. You can [check its source code on GitHub](https://github.com/juba/scatterD3_shiny_app) for a better understanding of the different arguments.

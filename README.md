@@ -1,17 +1,19 @@
-`scatterD3` is an HTML R widget for interactive scatter plots visualization. It is based on the [htmlwidgets](http://www.htmlwidgets.org/) R package and on the [d3.js](http://d3js.org/) javascript library.
+`scatterD3` is an HTML R widget for interactive scatter plots visualization. It is based on the [htmlwidgets](http://www.htmlwidgets.org/) R package and on the [d3.js](http://d3js.org/) javascript 
+library.
 
-This is alpha software.
+![CRAN Downloads](http://cranlogs.r-pkg.org/badges/last-month/scatterD3)
 
 ## Features
 
 `scatterD3` currently provides the following features :
 
 - Display points and text labels
-- Possibility to map color and symbol with other variables (automatic legend)
+- Possibility to map color, symbol and size with other variables (automatic legend)
 - Zoom with mouse wheel, pan with mouse while zoomed in
 - Ability to drag and move text labels
 - Customizable tooltips when hovering points
 - Points highlighting when hovering legend items
+- Charts integrated inside a Shiny app are fully updatable with smooth transitions when settings or data change
 
 
 Here is a small preview of what you will get :
@@ -21,7 +23,11 @@ Here is a small preview of what you will get :
 
 ## Installation
 
-Not on CRAN yet :
+Install latest stable release from CRAN :
+
+    install.packages("scatterD3")
+
+Or from Github for the latest, bleeding edge, full of bugs version :
 
     devtools::install_github("juba/scatterD3")
     
@@ -40,41 +46,9 @@ See [the introduction vignette](http://rpubs.com/juba/scatterD3) for a step-by-s
 
 ## Shiny integration
 
-Like every R HTML widget, shiny integration is straightforward. Furthermore, we provide some additional
-handlers to map form controls to SVG export and interactive effects (text size, points opacity and zoom reset).
-You just have to give the following `id` to your form controls :
+Like every R HTML widget, shiny integration is straightforward. But as a D3 widget, `scatterD3` is *updatable* : changes in settings or data can be displayed via smooth transitions instead of a complete chart redraw, which can provide interesting visual clues.
 
-- `#scatterD3-size` : text size in points (numerical value)
-- `#scatterD3-opacity` : point ant text opacity (numerical value, 0 to 1)
-- `#scatterD3-resetzoom` : reset zoom to default on click
-- `#scatterD3-download` : link to download the currently displayed figure as an SVG file
+Furthermore, `scatterD3` provides some additional handlers to two interactive features : SVG export and zoom resetting.
 
-Here is a minimal working example :
-
-```R
-library(shiny)
-runApp(shinyApp(
-    ui=fluidPage(
-      sidebarLayout(
-        sidebarPanel(
-          numericInput("scatterD3-size", "Labels size :", min = 2, max = 30, value = 10),
-          numericInput("scatterD3-opacity", "Opacity :", min = 0, max = 1, value = 1, step=0.05),
-          actionButton("scatterD3-resetzoom", "Reset Zoom"),
-          tags$a(id="scatterD3-download", href="#", class="btn btn-default", "Download SVG")
-        ),
-        mainPanel(scatterD3Output("scatterPlot"))
-      )
-    ),
-    server = function(input, output) {
-      output$scatterPlot <- renderScatterD3({
-        scatterD3(x=mtcars$wt,
-                  y=mtcars$mpg,
-                  lab=rownames(mtcars),
-                  col_var=mtcars$cyl)
-      })
-    }
-))
-```
-
-You can see the result of this [minimal scatterD3 shiny app](https://juba.shinyapps.io/scatterD3_shiny_app) hosted on shinyapps.io.
-
+The
+[sample scatterD3 shiny app](http://data.nozav.org/app/scatterD3/) allows you to see the different features described here. You can [check its source code on GitHub](https://github.com/juba/scatterD3_shiny_app) and the [the introduction vignette](http://rpubs.com/juba/scatterD3) for a better understanding of the different arguments.
