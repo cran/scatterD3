@@ -4,7 +4,6 @@ function scatterD3() {
     height = 600, // default height
     dims = {},
     margin = {top: 5, right: 10, bottom: 20, left: 50, legend_top: 50},
-    old_settings = {},
     settings = {},
     data = [],
     x, y, color_scale, symbol_scale, size_scale,
@@ -12,7 +11,7 @@ function scatterD3() {
     svg,
     zoom, drag;
 
-    function setup_sizes() {
+    function setup_sizes(settings) {
         dims.legend_width = 0;
         if (settings.has_legend) dims.legend_width = settings.legend_width;
 
@@ -33,7 +32,7 @@ function scatterD3() {
         dims.legend_x = dims.total_width - margin.right - dims.legend_width + 24;
     }
 
-    function setup_scales() {
+    function setup_scales(data, svg) {
 
         // x and y limits
         if (settings.xlim === null) {
@@ -76,11 +75,14 @@ function scatterD3() {
                  d3.max(data, function(d) { return Math.max(d.size_var);} )]);
 
         // zoom behavior
+        zoomed.svg = svg;
         zoom = d3.behavior.zoom()
         .x(x)
         .y(y)
         .scaleExtent([1, 32])
-        .on("zoom", zoomed);
+        .on("zoom", function() {
+             zoomed();
+         });
 
         // x and y axis functions
         xAxis = d3.svg.axis()
@@ -106,6 +108,7 @@ function scatterD3() {
 
     // Zoom function
     function zoomed(reset) {
+        var svg = zoomed.svg;
         svg.select(".x.axis").call(xAxis);
         svg.select(".y.axis").call(yAxis);
         svg.selectAll(".dot, .point-label")
@@ -177,7 +180,7 @@ function scatterD3() {
                 .html(tooltip_content(d));
             });
             selection.on("mousemove", function(){
-                tooltip.style("top", (event.pageY+15)+"px").style("left",(event.pageX+15)+"px");
+                tooltip.style("top", (d3.event.pageY+15)+"px").style("left",(d3.event.pageX+15)+"px");
             });
             selection.on("mouseout", function(){
                 tooltip.style("visibility", "hidden");
@@ -186,7 +189,7 @@ function scatterD3() {
     }
 
     // Apply format to dot
-    function dot_formatting (selection) {
+    function dot_formatting(selection) {
         selection
         .attr("transform", translation)
         .style("opacity", settings.point_opacity)
@@ -237,20 +240,39 @@ function scatterD3() {
     drag = d3.behavior.drag()
     .origin(function(d) {
         var size = (d.size_var === undefined) ? settings.point_size : size_scale(d.size_var);
-        dx = (d.lab_dx === undefined) ? 0 : d.lab_dx;
-        dy = (d.lab_dx === undefined) ? default_label_dy(size) : d.lab_dy;
+        var dx = (d.lab_dx === undefined) ? 0 : d.lab_dx;
+        var dy = (d.lab_dx === undefined) ? default_label_dy(size) : d.lab_dy;
         return {x:x(d.x)+dx, y:y(d.y)+dy};
     })
-    .on('dragstart', function(d) { d3.select(this).style('fill', '#000'); })
+    .on('dragstart', function(d) {
+      d3.select(this).style('fill', '#000');
+      var chart = d3.select(this).node().parentNode;
+      var size = (d.size_var === undefined) ? settings.point_size : size_scale(d.size_var);
+      var dx = (d.lab_dx === undefined) ? 0 : d.lab_dx;
+      var dy = (d.lab_dx === undefined) ? default_label_dy(size) : d.lab_dy;
+      d3.select(chart).append("svg:line")
+      .attr("id", "scatterD3-drag-line")
+      .attr("x1", x(d.x)).attr("x2", x(d.x) + dx)
+      .attr("y1", y(d.y)).attr("y2", y(d.y) + dy)
+      .style("stroke", "#000")
+      .style("opacity", 0.3);
+    })
     .on('drag', function(d) {
         cx = d3.event.x - x(d.x);
         cy = d3.event.y - y(d.y);
-        d3.select(this).attr('dx', cx + "px");
-        d3.select(this).attr('dy', cy + "px");
+        d3.select(this)
+        .attr('dx', cx + "px")
+        .attr('dy', cy + "px");
+        d3.select("#scatterD3-drag-line")
+        .attr('x2', x(d.x) + cx)
+        .attr("y2", y(d.y) + cy);
         d.lab_dx = cx;
         d.lab_dy = cy;
     })
-    .on('dragend', function(d) { d3.select(this).style('fill', color_scale(d.col_var)); });
+    .on('dragend', function(d) {
+      d3.select(this).style('fill', color_scale(d.col_var));
+      d3.select("#scatterD3-drag-line").remove();
+    });
 
     // Format legend label
     function legend_label_formatting (selection, margin_top) {
@@ -389,8 +411,8 @@ function scatterD3() {
 
             svg = d3.select(this).select("svg");
 
-            setup_sizes();
-            setup_scales();
+            setup_sizes(settings);
+            setup_scales(data, svg);
 
             // Root chart element
             root = svg.append("g")
@@ -471,33 +493,51 @@ function scatterD3() {
             }
 
             // Update chart with transitions
-            update_settings = function(old_settings, new_settings) {
+            update_settings = function(old_settings, new_settings, el) {
+
+                var svg = d3.select(el).select("svg");
+
                 settings = new_settings;
                 if (old_settings.point_opacity != settings.point_opacity)
                     svg.selectAll(".dot").transition().style("opacity", settings.point_opacity);
                 if (old_settings.labels_size != settings.labels_size)
                     svg.selectAll(".point-label").transition().style("font-size", settings.labels_size + "px");
+                if (old_settings.point_size != settings.point_size)
+                    svg.selectAll(".dot").transition().call(dot_formatting);
+                if (old_settings.has_labels != settings.has_labels) {
+                    if (!settings.has_labels) {
+                        svg.selectAll(".point-label").remove();
+                    }
+                    if (settings.has_labels) {
+                        var chart_body = svg.select(".chart-body");
+                        var labels = chart_body.selectAll(".point-label")
+                                    .data(data, key);
+                        labels.enter()
+                        .append("text")
+                        .call(label_init)
+                        .call(label_formatting)
+                        .call(drag);
+                    }
+                }
             };
 
             // Update data with transitions
-            update_data = function() {
+            update_data = function(data, el) {
 
-                if (old_settings.has_legend != settings.has_legend)
-                    resize_chart();
+                var svg = d3.select(el).select("svg");
 
-                setup_scales();
+                if (settings.has_legend_changed)
+                    resize_chart(el);
+
+                setup_scales(data, svg);
 
                 var t0 = svg.transition().duration(1000);
-                if (settings.x_changed) {
-                    svg.select(".x.axis .axis-label").text(settings.xlab);
-                    t0.select(".x.axis").call(xAxis);
-                    t0.select(".zeroline.vline").attr("d", zeroline([{x:0, y:y.domain()[0]}, {x:0, y:y.domain()[1]}]));
-                }
-                if (settings.y_changed) {
-                    svg.select(".y.axis .axis-label").text(settings.ylab);
-                    t0.select(".y.axis").call(yAxis);
-                    t0.select(".zeroline.hline").attr("d", zeroline([{x:x.domain()[0], y:0}, {x:x.domain()[1], y:0}]));
-                }
+                svg.select(".x.axis .axis-label").text(settings.xlab);
+                t0.select(".x.axis").call(xAxis);
+                t0.select(".zeroline.vline").attr("d", zeroline([{x:0, y:y.domain()[0]}, {x:0, y:y.domain()[1]}]));
+                svg.select(".y.axis .axis-label").text(settings.ylab);
+                t0.select(".y.axis").call(yAxis);
+                t0.select(".zeroline.hline").attr("d", zeroline([{x:x.domain()[0], y:0}, {x:x.domain()[1], y:0}]));
                 svg.select(".pane").call(zoom);
                 zoom.x(x);
                 zoom.y(y);
@@ -518,7 +558,7 @@ function scatterD3() {
                     labels.exit().transition().duration(1000).attr("transform", "translate(0,0)").remove();
                 }
 
-                if(settings.legend_changed) {
+                if (settings.legend_changed) {
                     var legend = svg.select(".legend");
                     // Remove existing legends
                     legend.selectAll("*").remove();
@@ -538,9 +578,9 @@ function scatterD3() {
     }
 
     // Dynamically resize chart elements
-    function resize_chart () {
+    function resize_chart (el) {
         // recompute sizes
-        setup_sizes();
+        setup_sizes(settings);
         // recompute scales and zoom
         var cache_translate = zoom.translate();
         var cache_scale = zoom.scale();
@@ -554,6 +594,7 @@ function scatterD3() {
         zoom.translate(cache_translate);
         zoom.scale(cache_scale);
         // Change svg attributes
+        var svg = d3.select(el).select("svg");
         svg.select(".root").attr("width", dims.width).attr("height", dims.height);
         svg.select(".cliprect").attr("width", dims.width).attr("height", dims.height);
         svg.select(".pane").attr("width", dims.width).attr("height", dims.height).call(zoom);
@@ -598,7 +639,7 @@ function scatterD3() {
 
 
     // Add controls handlers for shiny
-    chart.add_controls_handlers = function() {
+    chart.add_controls_handlers = function(el) {
 
         // Zoom reset
         d3.select("#" + settings.dom_id_reset_zoom).on("click", function() {
@@ -607,6 +648,7 @@ function scatterD3() {
                 iy = d3.interpolate(y.domain(), [min_y - gap_y, max_y + gap_y]);
                 return function(t) {
                     zoom.x(x.domain(ix(t))).y(y.domain(iy(t)));
+                    zoomed.svg = d3.select(el).select("svg");
                     zoomed(reset=true);
                 };
             })
@@ -619,8 +661,8 @@ function scatterD3() {
             .attr("xmlns", "http://www.w3.org/2000/svg")
             .attr("version", 1.1)
             .node().parentNode.innerHTML;
-            svg_content = svg_content.replace(/clip-path="url(.*?)"/,
-                                              'clip-path="url(#scatterclip' + settings.html_id + ')"');
+            svg_content = svg_content.replace(/clip-path="url\(.*?(#.*?)\)"/,
+                                              'clip-path="url($1)"');
             var imageUrl = "data:image/octet-stream;base64,\n" + btoa(svg_content);
             d3.select(this)
             .attr("download", "scatterD3.svg")
@@ -629,28 +671,31 @@ function scatterD3() {
     };
 
     // resize
-    chart.resize = function() {
-        resize_chart();
+    chart.resize = function(el) {
+        resize_chart(el);
     }
 
     // settings getter/setter
-    chart.data = function(value, redraw) {
+    chart.data = function(value, redraw, el) {
         if (!arguments.length) return data;
         data = value;
-        if (!redraw) update_data();
+        if (!redraw) update_data(data, el);
         return chart;
     };
 
     // settings getter/setter
-    chart.settings = function(value) {
+    chart.settings = function(value, el) {
         if (!arguments.length) return settings;
         if (Object.keys(settings).length === 0) {
             settings = value;
             // update dims and scales
-            setup_sizes();
-            setup_scales();
+            setup_sizes(settings);
+            var svg = d3.select(el).select("svg");
+            setup_scales(data, svg);
         } else {
-            update_settings(settings, value);
+            var old_settings = settings;
+            settings = value;
+            update_settings(old_settings, settings, el);
         }
         return chart;
     };
@@ -718,11 +763,10 @@ HTMLWidgets.widget({
         .attr("width", width)
         .attr("height", height);
         // resize chart
-        scatter.width(width).height(height).resize();
+        scatter.width(width).height(height).resize(el);
     },
 
     renderValue: function(el, obj, scatter) {
-
         // Check if update or redraw
         var first_draw = (Object.keys(scatter.settings()).length === 0);
         var redraw = first_draw || !obj.settings.transitions;
@@ -737,28 +781,29 @@ HTMLWidgets.widget({
 
         // Complete draw
         if (redraw) {
-            scatter = scatter.data(data, redraw);
-            scatter = scatter.settings(obj.settings);
+            scatter = scatter.data(data, redraw, el);
+            scatter = scatter.settings(obj.settings, el);
             // add controls handlers for shiny apps
-            scatter.add_controls_handlers();
+            scatter.add_controls_handlers(el);
             // draw chart
             d3.select(el)
             .call(scatter);
         }
         // Update only
         else {
-            obj.settings.previous_hashes = scatter.settings().hashes;
-            scatter = scatter.settings(obj.settings);
-            // Check what data did change
+            // Check what did change
+            obj.settings.has_legend_changed = scatter.settings().has_legend != obj.settings.has_legend;
+            obj.settings.has_labels_changed = scatter.settings().has_labels != obj.settings.has_labels;
             function changed(varname) {
-                return scatter.settings().previous_hashes[varname] != scatter.settings().hashes[varname];
+                return obj.settings.hashes[varname] != scatter.settings().hashes[varname];
             };
             obj.settings.x_changed = changed("x");
             obj.settings.y_changed = changed("y");
             obj.settings.legend_changed = changed("col_var") || changed("symbol_var") || changed("size_var");
-            obj.settings.data_changed = obj.settings.x_changed || obj.settings.y_changed || obj.settings.legend_changed;
+            obj.settings.data_changed = obj.settings.x_changed || obj.settings.y_changed || obj.settings.legend_changed || obj.settings.has_labels_changed;
+            scatter = scatter.settings(obj.settings, el);
             // Update data only if needed
-            if (obj.settings.data_changed) scatter.data(data, redraw);
+            if (obj.settings.data_changed) scatter.data(data, redraw, el);
         }
     }
 

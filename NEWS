@@ -1,3 +1,12 @@
+scatterD3 0.4
+------------------------------------------------------
+
+* A temporary line is drawn between text and point when dragging a label
+* Fix plots updating when several widgets are in the same shiny app
+* Fix tooltips not showing in Firefox
+* Fix clip-path URL problems when exporting to SVG
+
+
 scatterD3 0.3
 ------------------------------------------------------
 
