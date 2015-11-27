@@ -26,3 +26,9 @@ tooltips <- paste("This is an incredible <strong>", rownames(mtcars),"</strong><
                   mtcars$cyl, "cylinders !")
 scatterD3(x = mtcars$wt, y = mtcars$mpg, tooltip_text = tooltips)
 
+## ----cust_arrows---------------------------------------------------------
+scatterD3(x = c(1, 0.9, 0.7, 0.2, -0.4, -0.5), xlab = "x",
+          y = c(1, 0.1, -0.5, 0.5, -0.6, 0.7), ylab = "y",
+          lab = LETTERS[1:6], type_var = c("point", rep("arrow", 5)),
+          unit_circle = TRUE, fixed = TRUE, xlim = c(-1.2, 1.2))
+

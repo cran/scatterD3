@@ -17,6 +17,8 @@ function scatterD3() {
 
         dims.width = width - dims.legend_width;
         dims.height = height;
+        dims.height = dims.height - margin.top - margin.bottom;
+        dims.width = dims.width - margin.left - margin.right;
 
         // Fixed ratio
         if (settings.fixed) {
@@ -24,8 +26,6 @@ function scatterD3() {
             dims.width = dims.height;
         }
 
-        dims.height = dims.height - margin.top - margin.bottom;
-        dims.width = dims.width - margin.left - margin.right;
         dims.total_width = dims.width + margin.left + margin.right + dims.legend_width;
         dims.total_height = dims.height + margin.top + margin.bottom;
 
@@ -52,6 +52,13 @@ function scatterD3() {
             min_y = settings.ylim[0];
             max_y = settings.ylim[1];
             gap_y = 0;
+        }
+
+        // Fixed ratio
+        if (settings.fixed) {
+            min_x = min_y = Math.min(min_x, min_y);
+            max_x = max_y = Math.max(max_x, max_y);
+            gap_x = gap_y = Math.max(gap_x, gap_y);
         }
 
         // x, y, color, symbol and size scales
@@ -84,6 +91,19 @@ function scatterD3() {
              zoomed();
          });
 
+        // Zoom reset
+        d3.select("#" + settings.dom_id_reset_zoom).on("click", function() {
+            d3.transition().duration(750).tween("zoom", function() {
+                var ix = d3.interpolate(x.domain(), [min_x - gap_x, max_x + gap_x]),
+                iy = d3.interpolate(y.domain(), [min_y - gap_y, max_y + gap_y]);
+                return function(t) {
+                    zoom.x(x.domain(ix(t))).y(y.domain(iy(t)));
+                    zoomed.svg = svg;
+                    zoomed(reset = true);
+                };
+            })
+        });
+
         // x and y axis functions
         xAxis = d3.svg.axis()
         .scale(x)
@@ -113,11 +133,13 @@ function scatterD3() {
         svg.select(".y.axis").call(yAxis);
         svg.selectAll(".dot, .point-label")
         .attr("transform", translation);
+        svg.selectAll(".arrow").call(draw_arrow);
         var zeroline = d3.svg.line()
         .x(function(d) {return x(d.x)})
         .y(function(d) {return y(d.y)});
         svg.select(".zeroline.hline").attr("d", zeroline([{x:x.domain()[0], y:0}, {x:x.domain()[1], y:0}]));
         svg.select(".zeroline.vline").attr("d", zeroline([{x:0, y:y.domain()[0]}, {x:0, y:y.domain()[1]}]));
+        svg.select(".unit-circle").call(unit_circle_init);
     }
 
     // Create and draw x and y axes
@@ -172,7 +194,7 @@ function scatterD3() {
 
     // Initial dot attributes
     function dot_init (selection) {
-        // tooltips when hovering points
+         // tooltips when hovering points
         if (settings.has_tooltips) {
             var tooltip = d3.select(".scatterD3-tooltip");
             selection.on("mouseover", function(d, i){
@@ -206,33 +228,89 @@ function scatterD3() {
         .attr("class", function(d,i) { return "dot color color-" + d.col_var + " symbol symbol-" + d.symbol_var; });
     }
 
+    // Arrow drawing function
+    function draw_arrow(selection) {
+        selection
+        .attr("x1", function(d) { return x(0) })
+        .attr("y1", function(d) { return y(0) })
+        .attr("x2", function(d) { return x(d.x) })
+        .attr("y2", function(d) { return y(d.y) })
+    }
+
+    // Initial arrow attributes
+    function arrow_init (selection) {
+        selection
+         // tooltips when hovering points
+        if (settings.has_tooltips) {
+            var tooltip = d3.select(".scatterD3-tooltip");
+            selection.on("mouseover", function(d, i){
+                tooltip.style("visibility", "visible")
+                .html(tooltip_content(d));
+            });
+            selection.on("mousemove", function(){
+                tooltip.style("top", (d3.event.pageY+15)+"px").style("left",(d3.event.pageX+15)+"px");
+            });
+            selection.on("mouseout", function(){
+                tooltip.style("visibility", "hidden");
+            });
+        }
+    }
+
+    // Apply format to arrow
+    function arrow_formatting(selection) {
+        selection
+        .call(draw_arrow)
+        .style("stroke-width", "1px")
+        .style("opacity", settings.point_opacity)
+        // stroke color
+        .style("stroke", function(d) { return color_scale(d.col_var); })
+        .attr("marker-end", function(d) { return "url(#arrow-head-" + settings.html_id + "-" + color_scale(d.col_var) + ")" })
+        .attr("class", function(d,i) { return "arrow color color-" + d.col_var });
+    }
+
+    // Unit circle init
+    function unit_circle_init(selection) {
+        selection
+        .attr('cx', x(0))
+        .attr('cy', y(0))
+        .attr('rx', x(1)-x(0))
+        .attr('ry', y(0)-y(1))
+        .style("stroke", "#000")
+        .style("fill", "none");
+    }
+
     // Initial text label attributes
     function label_init (selection) {
         selection
-        .text(function(d) {return(d.lab)})
-        .attr("text-anchor", "middle")
-        .attr("dx", function(d) {
-            if (d.lab_dx === undefined) return("0px");
-            else return(d.lab_dx + "px");
-        });
+        .attr("text-anchor", "middle");
     }
 
     // Compute default vertical offset for labels
-    function default_label_dy(size) {
-        return (-Math.sqrt(size) / 2) - 7;
+    function default_label_dy(size, y, type_var) {
+        if (y < 0 && type_var !== undefined && type_var == "arrow") {
+          return (Math.sqrt(size) / 2) + settings.labels_size + 2;
+        }
+        else {
+          return (-Math.sqrt(size) / 2) - 6;
+        }
     }
 
     // Apply format to text label
     function label_formatting (selection) {
         selection
+        .text(function(d) {return(d.lab)})
         .style("font-size", settings.labels_size + "px")
         .attr("class", function(d,i) { return "point-label color color-" + d.col_var + " symbol symbol-" + d.symbol_var; })
         .attr("transform", translation)
         .style("fill", function(d) { return color_scale(d.col_var); })
+        .attr("dx", function(d) {
+            if (d.lab_dx === undefined) return("0px");
+            else return(d.lab_dx + "px");
+        })
         .attr("dy", function(d) {
             if (d.lab_dy !== undefined) return(d.lab_dy + "px");
             var size = (d.size_var === undefined) ? settings.point_size : size_scale(d.size_var);
-            return default_label_dy(size) + "px";
+            return default_label_dy(size, d.y, d.type_var) + "px";
         });
     }
 
@@ -241,7 +319,7 @@ function scatterD3() {
     .origin(function(d) {
         var size = (d.size_var === undefined) ? settings.point_size : size_scale(d.size_var);
         var dx = (d.lab_dx === undefined) ? 0 : d.lab_dx;
-        var dy = (d.lab_dx === undefined) ? default_label_dy(size) : d.lab_dy;
+        var dy = (d.lab_dx === undefined) ? default_label_dy(size, d.y, d.type_var) : d.lab_dy;
         return {x:x(d.x)+dx, y:y(d.y)+dy};
     })
     .on('dragstart', function(d) {
@@ -249,7 +327,7 @@ function scatterD3() {
       var chart = d3.select(this).node().parentNode;
       var size = (d.size_var === undefined) ? settings.point_size : size_scale(d.size_var);
       var dx = (d.lab_dx === undefined) ? 0 : d.lab_dx;
-      var dy = (d.lab_dx === undefined) ? default_label_dy(size) : d.lab_dy;
+      var dy = (d.lab_dx === undefined) ? default_label_dy(size, d.y, d.type_var) : d.lab_dy;
       d3.select(chart).append("svg:line")
       .attr("id", "scatterD3-drag-line")
       .attr("x1", x(d.x)).attr("x2", x(d.x) + dx)
@@ -406,6 +484,15 @@ function scatterD3() {
 
     }
 
+    // Filter points and arrows data
+    function point_filter(d) {
+      return d.type_var === undefined || d.type_var == "point";
+    }
+    function arrow_filter(d) {
+      return d.type_var !== undefined && d.type_var == "arrow";
+    }
+
+
     function chart(selection) {
         selection.each(function() {
 
@@ -420,15 +507,28 @@ function scatterD3() {
             .style("fill", "#FFF")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+            // <defs>
+            var defs = svg.append("defs")
             // clipping rectangle
-            svg.append("defs")
-            .append("clipPath")
+            defs.append("clipPath")
             .attr('id', 'scatterclip' + settings.html_id)
             .append('rect')
             .attr('class', 'cliprect')
             .attr('width', dims.width)
             .attr('height', dims.height);
-
+            // arrow head markers
+            color_scale.range().forEach(function(d) {
+                defs.append("marker")
+                .attr("id", "arrow-head-" + settings.html_id + "-" + d)
+                .attr("markerWidth", "10")
+                .attr("markerHeight", "10")
+                .attr("refX", "10")
+                .attr("refY", "4")
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,0 L0,8 L10,4 L0,0")
+                .style("fill", d);
+            });
             // add x and y axes
             add_axes(root);
 
@@ -459,11 +559,25 @@ function scatterD3() {
             .attr("class", "zeroline vline")
             .attr("d", zeroline([{x:0, y:y.domain()[0]}, {x:0, y:y.domain()[1]}]));
 
+            // Unit circle
+            if (settings.unit_circle) {
+              var unit_circle = chart_body.append('svg:ellipse')
+              .attr('class', 'unit-circle')
+              .call(unit_circle_init);
+            }
+
+            // Add arrows
+            var arrow = chart_body
+            .selectAll(".arrow")
+            .data(data.filter(arrow_filter), key(arrow_filter));
+            arrow.enter()
+            .append("svg:line")
+            .call(arrow_init)
+            .call(arrow_formatting);
             // Add points
             var dot = chart_body
             .selectAll(".dot")
-            .data(data, key);
-
+            .data(data.filter(point_filter), key(point_filter));
             dot.enter()
             .append("path")
             .call(dot_init)
@@ -529,6 +643,7 @@ function scatterD3() {
                 if (settings.has_legend_changed)
                     resize_chart(el);
 
+                setup_sizes(settings);
                 setup_scales(data, svg);
 
                 var t0 = svg.transition().duration(1000);
@@ -538,16 +653,31 @@ function scatterD3() {
                 svg.select(".y.axis .axis-label").text(settings.ylab);
                 t0.select(".y.axis").call(yAxis);
                 t0.select(".zeroline.hline").attr("d", zeroline([{x:x.domain()[0], y:0}, {x:x.domain()[1], y:0}]));
+                t0.select(".unit-circle").call(unit_circle_init)
                 svg.select(".pane").call(zoom);
                 zoom.x(x);
                 zoom.y(y);
 
                 var chart_body = svg.select(".chart-body");
-                var dots = chart_body.selectAll(".dot")
-                .data(data, key);
-                dots.enter().append("path").call(dot_init);
-                dots.transition().duration(1000).call(dot_formatting);
-                dots.exit().transition().duration(1000).attr("transform", "translate(0,0)").remove();
+
+                // Unit circle
+                var unit_circle = chart_body.select(".unit-circle")
+                .transition().duration(1000)
+                .call(unit_circle_init);
+                // Add arrows
+                var arrow = chart_body
+                .selectAll(".arrow")
+                .data(data.filter(arrow_filter), key(arrow_filter));
+                arrow.enter().append("svg:line").call(arrow_init);
+                arrow.transition().duration(1000).call(arrow_formatting);
+                arrow.exit().transition().duration(1000).style("opacity", "0").remove();
+                // Add points
+                var dot = chart_body
+                .selectAll(".dot")
+                .data(data.filter(point_filter), key(point_filter));
+                dot.enter().append("path").call(dot_init);
+                dot.transition().duration(1000).call(dot_formatting);
+                dot.exit().transition().duration(1000).attr("transform", "translate(0,0)").remove();
 
                 if (settings.has_labels) {
                     var labels = chart_body.selectAll(".point-label")
@@ -602,7 +732,10 @@ function scatterD3() {
         svg.select(".x.axis").attr("transform", "translate(0," + dims.height + ")").call(xAxis);
         svg.select(".x.axis .axis-label").attr("x", dims.width - 5);
         svg.select(".y.axis").call(yAxis);
+        svg.select(".unit-circle").call(unit_circle_init);
+
         svg.selectAll(".dot").attr("transform", translation);
+        svg.selectAll(".arrow").call(draw_arrow);
         if (settings.has_labels) {
             svg.selectAll(".point-label")
             .attr("transform", translation);
@@ -640,20 +773,6 @@ function scatterD3() {
 
     // Add controls handlers for shiny
     chart.add_controls_handlers = function(el) {
-
-        // Zoom reset
-        d3.select("#" + settings.dom_id_reset_zoom).on("click", function() {
-            d3.transition().duration(750).tween("zoom", function() {
-                var ix = d3.interpolate(x.domain(), [min_x - gap_x, max_x + gap_x]),
-                iy = d3.interpolate(y.domain(), [min_y - gap_y, max_y + gap_y]);
-                return function(t) {
-                    zoom.x(x.domain(ix(t))).y(y.domain(iy(t)));
-                    zoomed.svg = d3.select(el).select("svg");
-                    zoomed(reset=true);
-                };
-            })
-        });
-
         // SVG export
         d3.select("#" + settings.dom_id_svg_export)
         .on("click", function(){
