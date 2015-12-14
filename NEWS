@@ -1,3 +1,13 @@
+scatterD3 0.5.1
+------------------------------------------------------
+
+* Fix zoom reset when several charts in the same shiny app
+* Switch to 20 colors ordinary scales if there are more than 10 color variable levels
+* Bugfix : wrong svg reference passed to hover legend functions when several scatterD3 instances in the same shiny app
+* Make point labels updatable
+* Manage changes of unit_circle settings
+
+
 scatterD3 0.5
 ------------------------------------------------------
 
@@ -35,7 +45,6 @@ scatterD3 0.2
 * Fix tooltips not showing under Shiny/Bootstrap (Thanks @tinyheero for reporting)
 * Fix tooltip content when several scatter plots are displayed on the same page
 * Respect custom label position when zooming
-
 
 
 scatterD3 0.1.1
