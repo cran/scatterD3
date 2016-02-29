@@ -27,6 +27,20 @@ tooltips <- paste("This is an incredible <strong>", rownames(mtcars),"</strong><
                   mtcars$cyl, "cylinders !")
 scatterD3(x = mtcars$wt, y = mtcars$mpg, tooltip_text = tooltips)
 
+## ----ellipses------------------------------------------------------------
+scatterD3(x = mtcars$wt, y = mtcars$mpg, ellipses = TRUE)
+
+## ----ellipses_col--------------------------------------------------------
+scatterD3(x = mtcars$wt, y = mtcars$mpg, col_var = mtcars$cyl, ellipses = TRUE)
+
+## ----lasso---------------------------------------------------------------
+scatterD3(x = mtcars$wt, y = mtcars$mpg, lab = rownames(mtcars), lasso = TRUE)
+
+## ----lasso_callback------------------------------------------------------
+scatterD3(x = mtcars$wt, y = mtcars$mpg, lab = rownames(mtcars), 
+          lasso = TRUE,
+          lasso_callback = "function(sel) {alert(sel.data().map(function(d) {return d.lab}).join('\\n'));}")
+
 ## ----cust_arrows---------------------------------------------------------
 scatterD3(x = c(1, 0.9, 0.7, 0.2, -0.4, -0.5), xlab = "x",
           y = c(1, 0.1, -0.5, 0.5, -0.6, 0.7), ylab = "y",

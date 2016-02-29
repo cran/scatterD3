@@ -9,13 +9,16 @@ D3.js was created by Michael Bostock. See \url{http://d3js.org/}
 \usage{
 scatterD3(x, y, lab = NULL, point_size = 64, labels_size = 10,
   point_opacity = 1, fixed = FALSE, col_var = NULL, colors = NULL,
-  symbol_var = NULL, size_var = NULL, size_range = c(10, 300),
-  col_lab = NULL, symbol_lab = NULL, size_lab = NULL, key_var = NULL,
-  type_var = NULL, unit_circle = FALSE, tooltips = TRUE,
-  tooltip_text = NULL, xlab = NULL, ylab = NULL, html_id = NULL,
-  width = NULL, height = NULL, legend_width = 150, xlim = NULL,
-  ylim = NULL, dom_id_reset_zoom = "scatterD3-reset-zoom",
-  dom_id_svg_export = "scatterD3-svg-export", transitions = FALSE)
+  ellipses = FALSE, ellipses_level = 0.95, symbol_var = NULL,
+  size_var = NULL, size_range = c(10, 300), col_lab = NULL,
+  symbol_lab = NULL, size_lab = NULL, key_var = NULL, type_var = NULL,
+  unit_circle = FALSE, tooltips = TRUE, tooltip_text = NULL,
+  xlab = NULL, ylab = NULL, html_id = NULL, width = NULL,
+  height = NULL, legend_width = 150, xlim = NULL, ylim = NULL,
+  dom_id_reset_zoom = "scatterD3-reset-zoom",
+  dom_id_svg_export = "scatterD3-svg-export",
+  dom_id_lasso_toggle = "scatterD3-lasso-toggle", transitions = FALSE,
+  lasso = FALSE, lasso_callback = NULL)
 }
 \arguments{
 \item{x}{numerical vector of x values}
@@ -28,7 +31,7 @@ scatterD3(x, y, lab = NULL, point_size = 64, labels_size = 10,
 
 \item{labels_size}{text labels size}
 
-\item{point_opacity}{points opacity}
+\item{point_opacity}{points opacity, as an integer (same opacity for all points) or a vector of integers}
 
 \item{fixed}{force a 1:1 aspect ratio}
 
@@ -38,6 +41,10 @@ scatterD3(x, y, lab = NULL, point_size = 64, labels_size = 10,
 defined as an hexadecimal string (eg "#FF0000").  If
 \code{colors} is a named list or vector, then the colors will
 be associated with their name within \code{col_var}.}
+
+\item{ellipses}{draw confidence ellipses for points or the different color mapping groups}
+
+\item{ellipses_level}{confidence level for ellipses (0.95 by default)}
 
 \item{symbol_var}{optional vector for points symbol mapping}
 
@@ -71,7 +78,7 @@ be associated with their name within \code{col_var}.}
 
 \item{height}{figure height, computed when displayed}
 
-\item{legend_width}{legend area width, in pixels}
+\item{legend_width}{legend area width, in pixels. Set to 0 to disable legend completely.}
 
 \item{xlim}{numeric vector of length 2, manual x axis limits}
 
@@ -81,7 +88,13 @@ be associated with their name within \code{col_var}.}
 
 \item{dom_id_svg_export}{HTML DOM id of the element to bind the "svg export" control to.}
 
+\item{dom_id_lasso_toggle}{HTML DOM id of the element to bind the "toggle lasso" control to.}
+
 \item{transitions}{if TRUE, data updates are displayed with smooth transitions, if FALSE the whole chart is redrawn. Only used within shiny apps.}
+
+\item{lasso}{logical value to add {https://github.com/skokenes/D3-Lasso-Plugin}{d3-lasso-plugin} feature}
+
+\item{lasso_callback}{the body of a JavaScript callback function with the argument \code{sel} to be applied to a lasso plugin selection}
 }
 \description{
 Generates an interactive scatter plot based on d3.js.

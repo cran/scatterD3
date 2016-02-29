@@ -54,6 +54,8 @@ By passing vectors to the `col_var` and/or `symbol_var` arguments, you can map p
 scatterD3(x = mtcars$wt, y = mtcars$mpg, col_var = mtcars$cyl, symbol_var = mtcars$gear)
 ```
 
+A legend is then automatically added. You can manually specify its width with the `legend_width` argument. Use `legend_width = 0` to disable it entirely.
+
 Note that when hovering over a legend item with your mouse, the corresponding points are highlighted. Also note that the mapped variables values are automatically added to the default tooltips.
 
 You can also map symbol sizes with a variable with the `size_var` argument. `size_range` allows to customize the sizes range :
@@ -96,6 +98,43 @@ scatterD3(x = mtcars$wt, y = mtcars$mpg, tooltip_text = tooltips)
 ```
 
 You can also disable tooltips entirely with `tooltips = FALSE`.
+
+## Confidence ellipses
+
+You can draw a confidence ellipse around the points :
+
+```{r ellipses}
+scatterD3(x = mtcars$wt, y = mtcars$mpg, ellipses = TRUE)
+```
+
+Or around the different groups of points defined by `col_var` :
+
+```{r ellipses_col}
+scatterD3(x = mtcars$wt, y = mtcars$mpg, col_var = mtcars$cyl, ellipses = TRUE)
+```
+
+Ellipses are computed by the  `ellipse.default()` function of the [ellipse package](https://cran.r-project.org/package=ellipse). The confidence level can be changed with the `ellipse_level` argument (`0.95` by default).
+
+## Lasso selection tool
+
+Thanks to the [d3-lasso-plugin](https://github.com/skokenes/D3-Lasso-Plugin) integration made by @[timelyportfolio](https://github.com/timelyportfolio), you can select and highlight points with a lasso selection tool. To activate it, just add a `lasso = TRUE` argument. The tool is used by shift-clicking and dragging on the plot area (if it doesn't activate, click on the chart first to give it focus).
+
+```{r lasso}
+scatterD3(x = mtcars$wt, y = mtcars$mpg, lab = rownames(mtcars), lasso = TRUE)
+```
+
+To undo the selection, just shift-click again.
+
+You can specify a custom JavaScript callback function to be called by passing it to the `lasso_callback` argument as a character string. This function should accept a `sel` argument, which is a d3 selection of selected points.
+
+Here is an example which shows an alert with selected point labels :
+
+```{r lasso_callback}
+scatterD3(x = mtcars$wt, y = mtcars$mpg, lab = rownames(mtcars), 
+          lasso = TRUE,
+          lasso_callback = "function(sel) {alert(sel.data().map(function(d) {return d.lab}).join('\\n'));}")
+```
+
 
 ## Other options
 

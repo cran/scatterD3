@@ -15,7 +15,9 @@ library.
 - Ability to drag and move text labels
 - Customizable tooltips when hovering points
 - Points highlighting when hovering legend items
+- Option to draw confidence ellipses around group of points
 - Charts integrated inside a Shiny app are fully updatable with smooth transitions when settings or data change
+- Lasso selection tool integration via d3-lasso-plugin for points highlighting
 
 
 Here is a small preview of what you will get :
@@ -46,7 +48,7 @@ scatterD3(x = mtcars$wt, y = mtcars$mpg, lab = rownames(mtcars),
           symbol_lab = "Manual transmission")
 ```
               
-See [the introduction vignette](http://rpubs.com/juba/scatterD3) for a step-by-step guide and details about the different function arguments.
+See [the introduction vignette](https://rawgit.com/juba/scatterD3/master/vignettes%2Fintroduction.html) for a step-by-step guide and details about the different function arguments.
 
 ## Shiny integration
 
@@ -55,7 +57,7 @@ Like every R HTML widget, shiny integration is straightforward. But as a D3 widg
 Furthermore, `scatterD3` provides some additional handlers to two interactive features : SVG export and zoom resetting.
 
 The
-[sample scatterD3 shiny app](http://data.nozav.org/app/scatterD3/) allows you to see the different features described here. You can [check its source code on GitHub](https://github.com/juba/scatterD3_shiny_app) and the [introduction vignette](http://rpubs.com/juba/scatterD3) for a better understanding of the different arguments.
+[sample scatterD3 shiny app](http://data.nozav.org/app/scatterD3/) allows you to see the different features described here. You can [check its source code on GitHub](https://github.com/juba/scatterD3_shiny_app) and the [introduction vignette](https://rawgit.com/juba/scatterD3/master/vignettes%2Fintroduction.html) for a better understanding of the different arguments.
 
 
 ## Credits
@@ -66,6 +68,7 @@ This package has been made possible by :
 - RStudio's [shiny](http://shiny.rstudio.com/) and [htmlwidgets](http://www.htmlwidgets.org/) packages
 - Susie Lu's [d3-legend](https://github.com/susielu/d3-legend) module
 - Rob Moore's [article on reusable d3.js charts](http://www.toptal.com/d3-js/towards-reusable-d3-js-charts)
+- Speros Kokenes' [d3 lasso plugin](https://github.com/skokenes/D3-Lasso-Plugin)
 
 
 
