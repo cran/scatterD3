@@ -1,4 +1,11 @@
-scatterD3 0.6
+scatterD3 0.6.2
+------------------------------------------------------
+
+* Darker points color during lasso selection
+* Bugfix : Remove any previous anchor from clip-path urls
+* Bugfix : deal with NA in size_var
+
+scatterD3 0.6.1
 ------------------------------------------------------
 
 * New feature : d3 lasso plugin integration, initial work by @timelyportfolio
