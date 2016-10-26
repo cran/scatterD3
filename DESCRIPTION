@@ -1,8 +1,8 @@
 Package: scatterD3
 Type: Package
 Title: D3 JavaScript Scatterplot from R
-Version: 0.6.2
-Date: 2016-03-24
+Version: 0.7
+Date: 2016-10-26
 Authors@R: c(
     person(
       "Julien", "Barnier",
@@ -43,7 +43,7 @@ Imports: htmlwidgets, digest, ellipse
 Suggests: knitr, rmarkdown
 RoxygenNote: 5.0.1
 NeedsCompilation: no
-Packaged: 2016-03-24 13:27:43 UTC; julien
+Packaged: 2016-10-26 14:09:26 UTC; julien
 Author: Julien Barnier [aut, cre],
   Kent Russell [aut, ctb],
   Mike Bostock [aut, cph] (d3.js library, http://d3js.org),
@@ -51,4 +51,4 @@ Author: Julien Barnier [aut, cre],
   Speros Kokenes [aut, cph] (d3-lasso-plugin library,
     https://github.com/skokenes/D3-Lasso-Plugin)
 Repository: CRAN
-Date/Publication: 2016-03-24 23:53:34
+Date/Publication: 2016-10-26 18:13:27

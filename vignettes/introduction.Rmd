@@ -1,5 +1,5 @@
 ---
-title: "Interactive scatterplots with scatterD3"
+title: "scatterD3 : a Visual Guide"
 author: "Julien Barnier"
 date: "`r Sys.Date()`"
 output: 
@@ -7,10 +7,15 @@ output:
     fig_width: 5
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Introduction}
+  %\VignetteIndexEntry{scatterD3 : A Visual Guide}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+```{r, include=FALSE}
+library(scatterD3)
+```
+
 
 The `scatterD3` package provides an HTML widget based on the `htmlwidgets` package and allows to produce interactive scatterplots by using the `d3.js` javascript visualization library.
 
@@ -18,10 +23,17 @@ The `scatterD3` package provides an HTML widget based on the `htmlwidgets` packa
 
 Starting with the sample `mtcars` dataset, we can produce a basic scatterplot with the following command :
 
-```{r basic}
+```{r basic, eval=FALSE}
 library(scatterD3)
 scatterD3(x = mtcars$wt, y = mtcars$mpg)
 ```
+
+You can pass data arguments as vectors, like above, but you can also give a data frame as `data` argument and then provide variable names which will be evaluated inside this data frame :
+
+```{r basic_nse}
+scatterD3(data = mtcars , x = wt, y = mpg)
+```
+
 
 This will display a simple visualization with the given variables as `x` and `y` axis. There are several interactive features directly available :
 
@@ -29,29 +41,61 @@ This will display a simple visualization with the given variables as `x` and `y`
 - you can pan the plot by dragging with your mouse
 - by hovering over a point, you can display a small tooltip window giving the `x` and `y` values
 
-You can customize the points size with the `point_size` parameter, their opacity with `point_opacity`, and you can force the plot to have a 1:1 fixed aspect ratio with `fixed = TRUE`.
+You can customize the points size with the `point_size` parameter, their
+global opacity with `point_opacity`, and you can force the plot to have a 1:1
+fixed aspect ratio with `fixed = TRUE`. You can also manually specify the
+points color with the `colors` argument
 
 ```{r basic_cust}
-scatterD3(x = mtcars$wt, y = mtcars$mpg, point_size = 15, point_opacity = 0.5, fixed = TRUE)
+scatterD3(data = mtcars, x = wt, y = mpg, 
+          point_size = 35, point_opacity = 0.5, fixed = TRUE,
+          colors = "#A94175")
 ```
+
+You can change size and opacity of points when hovering with the `hover_size` and `hover_opacity` settings :
+
+```{r hover_cust}
+scatterD3(data = mtcars, x = wt, y = mpg, 
+          point_size = 100, point_opacity = 0.5,
+          hover_size = 4, hover_opacity = 1)
+```
+
+## Categorical `x` and `y`
+
+If the `x` or `y` variable is not numeric or is a factor, then an ordinal
+scale is used for the corresponding axis. Note that zooming is then not
+possible along this axis.
+
+```{r categorical}
+mtcars$cyl_fac <- paste(mtcars$cyl, "cylinders")
+scatterD3(data = mtcars, x = cyl_fac, y = mpg)
+```
+
+You can use the `left_margin` argument when using a categorical `y` variable
+if the axis labels are not entirely visible :
+
+```{r categorical_left_margin}
+scatterD3(data = mtcars, x = wt, y = cyl_fac, left_margin = 80)
+```
+
 
 ## Point labels
 
 You can add text labels to the points by passing a character vector to the `lab` parameter. Labels size are controlled by the `labels_size` parameter.
 
 ```{r labels}
-scatterD3(x = mtcars$wt, y = mtcars$mpg, lab = rownames(mtcars), labels_size = 9)
+mtcars$names <- rownames(mtcars)
+scatterD3(data = mtcars, x = wt, y = mpg, lab = names, labels_size = 9)
 ```
 
 Note that text labels are fully movable : click and drag a label with your mouse to place it where you want. Custom positions are preserved while zooming/panning.
 
-
-## Mapping colors, symbols and size to variables
+## Mapping colors, symbols, size and opacity to variables
 
 By passing vectors to the `col_var` and/or `symbol_var` arguments, you can map points colors and symbols to other variables.
 
 ```{r mapping}
-scatterD3(x = mtcars$wt, y = mtcars$mpg, col_var = mtcars$cyl, symbol_var = mtcars$gear)
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl, symbol_var = gear)
 ```
 
 A legend is then automatically added. You can manually specify its width with the `legend_width` argument. Use `legend_width = 0` to disable it entirely.
@@ -61,30 +105,100 @@ Note that when hovering over a legend item with your mouse, the corresponding po
 You can also map symbol sizes with a variable with the `size_var` argument. `size_range` allows to customize the sizes range :
 
 ```{r map_size}
-scatterD3(x = mtcars$wt, y = mtcars$mpg, col_var = mtcars$cyl, size_var = mtcars$hp, 
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl, size_var = hp, 
           size_range = c(10,1000), point_opacity = 0.7)
 ```
+
+You can specify custom colors by passing a vector of hexadecimal strings to the `colors` argument. If the vector is named, then the colors will be associated with their names within `col_var`.
+
+```{r map_custom_colors}
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
+          colors = c("4" = "#ECD078", "8" = "#C02942", "6" = "#53777A"))
+```
+
+If `col_var` is numeric, not a factor, and has more than 6 unique values, it
+is considered as continuous, and drawn accordingly using the Veridis d3
+interpolator.
+
+```{r map_continuous_color}
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = disp)
+```
+
+In this case, any `colors` argument is ignored. You can force `col_var` to be considered as continuous with `col_continuous = TRUE`.
+
+You can also use the `opacity_var` argument to map point opacity to a variable.
+Note that for now no legend for opacity is added, though.
+
+```{r opacity_var}
+scatterD3(data=mtcars, x=mpg, y=wt, opacity_var = drat)
+```
+
+## Adding lines
+
+In addition to your data points, you can add to your scatterplot. This is done vy passing a *data frame* to the `lines` argument. This *data frame* must have at least two columns called `slope` and `intercept`, and as many rows as lines you want to draw.
+
+For example, if you want to add a 1:1 line :
+
+```{r lines}
+scatterD3(data = mtcars, x = wt, y = mpg, fixed = TRUE, 
+          lines = data.frame(slope = 1, intercept = 0))
+```
+
+You can style your lines by adding `stroke`, `stroke_width` and `stroke_dasharray` columns. These columns values will be added as [corresponding styles](https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Fills_and_Strokes) to the generated SVG line. So if you want a wide dashed red horizontal line :
+
+```{r lines_style}
+scatterD3(data = mtcars, x = wt, y = mpg, 
+          lines = data.frame(slope = 0, 
+                             intercept = 30,
+                             stroke = "red",
+                             stroke_width = 5,
+                             stroke_dasharray = "10,5"))
+```
+
+If you want to draw a vertical line, pass the `Inf` value to `slope`. The value of `intercept` is then interpreted as the intercept along the x axis.
+
+By default, if no `lines` argument is provided two dashed horizontal and vertical lines are drawn through the origin, which is equivalent to :
+
+```{r lines_default}
+scatterD3(data = mtcars, x = wt, y = mpg, fixed = TRUE, 
+          lines = data.frame(slope = c(0, Inf), 
+                             intercept = c(0, 0),
+                             stroke = "#000",
+                             stroke_width = 1,
+                             stroke_dasharray = 5))
+```
+
 
 ## Axis limits
 
 You can manually specify the `x` or `y` axis limits with the `xlim` and `ylim` arguments :
 
 ```{r axis_limits}
-scatterD3(x = mtcars$wt, y = mtcars$mpg, xlim=c(0,10), ylim=c(10,35))
+scatterD3(data = mtcars, x = wt, y = mpg, xlim=c(0,10), ylim=c(10,35))
 ```
 
 
+## Axes and legend customization
 
-## Custom axis and legend labels
-
-You can customize the axis and legend labels with `xlab`, `ylab`, `col_lab`, `symbol_lab` and `size_lab` :
+You can customize the value of the axes and legend labels with `xlab`, `ylab`, `col_lab`, `symbol_lab` and `size_lab` :
 
 ```{r cust_labels}
-scatterD3(x = mtcars$wt, y = mtcars$mpg, col_var = mtcars$cyl, symbol_var = mtcars$gear,
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl, symbol_var = gear,
           xlab = "Weight", ylab = "Mpg", col_lab = "Cylinders", symbol_lab = "Gears")
 ```
 
 Note that default tooltips are updated accordingly.
+
+You can also change the font size of axes and legend text with `axes_font_size` and `legend_font_size` :
+
+```{r cust_labels_size}
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
+          xlab = "Weight", ylab = "Mpg", 
+          axes_font_size = "120%",
+          legend_font_size = "14px")
+```
+
+You can provide any CSS compatible value, wether a fixed size such as `2em` or a relative one like `95%`.
 
 
 ## Custom tooltips
@@ -94,33 +208,100 @@ If the default tooltips don't suit your needs, you can customize them by providi
 ```{r cust_tooltips}
 tooltips <- paste("This is an incredible <strong>", rownames(mtcars),"</strong><br />with ", 
                   mtcars$cyl, "cylinders !")
-scatterD3(x = mtcars$wt, y = mtcars$mpg, tooltip_text = tooltips)
+scatterD3(data = mtcars, x = wt, y = mpg, tooltip_text = tooltips)
 ```
 
 You can also disable tooltips entirely with `tooltips = FALSE`.
+
+## Open URLs when clicking points
+
+With the `url_var` argument, you can specify a character vectors of URLs, associated to each point, and which will be opened when the point is clicked.
+
+```{r urls}
+mtcars$urls <- paste0("https://www.duckduckgo.com/?q=", rownames(mtcars))
+scatterD3(data = mtcars, x = wt, y = mpg, lab = names, url_var = urls)
+```
+
+Note that this won't work inside RStudio's internal browser.
+
+## JavaScript callback on clicking point
+
+The optional `click_callback` argument is a character string defining a JavaScript function to be called when a dot is clicked. It must accept two arguments : `html_id` (the unique `id` of the current scatterplot), and `i` (the index of the clicked point).
+
+```{r click_callback}
+scatterD3(data = mtcars, x = wt, y = mpg,
+   click_callback = "function(id, index) {
+   alert('scatterplot ID: ' + id + ' - Point index: ' + index) 
+   }")
+```
+
+
+One usage can be to pass the index of the clicked point back to Shiny when `scatterD3` is run inside a Shiny app. The following implementation can do it by using `Shiny.onInputChange()` :
+
+```{r, click_callback_shiny, eval=FALSE}
+scatterD3(data = mtcars, x = wt, y = mpg,
+  click_callback = "function(id, index) {
+  if(id && typeof(Shiny) != 'undefined') {
+      Shiny.onInputChange(id + '_selected', index);
+  }
+}")
+```
+
+Thanks to [detule](https://github.com/detule) and [harveyl888](https://github.com/harveyl888) for the code.
+
+Note that `url_var` and `click_callback` cannot be used at the same time.
+
+
+## JavaScript zoom callback
+
+The optional `zoom_callback` argument is a character string defining a JavaScript function to be called when a zoom event is triggered. It must accept two arguments `xmin`, `xmax`, `ymin` and `ymax` (in this order), which give the new `x` and `y` domains after zooming.
+
+```{r zoom_callback}
+scatterD3(data = mtcars, x = wt, y = mpg,
+   zoom_callback = "function(xmin, xmax, ymin, ymax) {
+    var zoom = '<strong>Zoom</strong><br />xmin = ' + xmin + '<br />xmax = ' + xmax + '<br />ymin = ' + ymin + '<br />ymax = ' + ymax;
+    document.getElementById('zoomExample').innerHTML = zoom;
+   }")
+```
+
+<div id="zoomExample" style="font-size: 80%; background-color: #F9F9F9; padding: 5px; margin-left: 5em; width: 15em;"><strong>Zoom</strong><br /> None yet !</div>
+
+
 
 ## Confidence ellipses
 
 You can draw a confidence ellipse around the points :
 
 ```{r ellipses}
-scatterD3(x = mtcars$wt, y = mtcars$mpg, ellipses = TRUE)
+scatterD3(data = mtcars, x = wt, y = mpg, ellipses = TRUE)
 ```
 
 Or around the different groups of points defined by `col_var` :
 
 ```{r ellipses_col}
-scatterD3(x = mtcars$wt, y = mtcars$mpg, col_var = mtcars$cyl, ellipses = TRUE)
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl, ellipses = TRUE)
 ```
 
 Ellipses are computed by the  `ellipse.default()` function of the [ellipse package](https://cran.r-project.org/package=ellipse). The confidence level can be changed with the `ellipse_level` argument (`0.95` by default).
+
+## Gear menu
+
+The "gear menu" is a small menu which can be displayed by clocking on the "gear" icon on the top-right corner of the plot. It allows to reset the zoom, export the current graph to SVG, and toggle lasso selection.
+
+It is displayed by default, but you can hide it with the `menu = FALSE` argument.
+
+```{r nomenu}
+scatterD3(data = mtcars, x = wt, y = mpg, menu = FALSE)
+```
+
 
 ## Lasso selection tool
 
 Thanks to the [d3-lasso-plugin](https://github.com/skokenes/D3-Lasso-Plugin) integration made by @[timelyportfolio](https://github.com/timelyportfolio), you can select and highlight points with a lasso selection tool. To activate it, just add a `lasso = TRUE` argument. The tool is used by shift-clicking and dragging on the plot area (if it doesn't activate, click on the chart first to give it focus).
 
 ```{r lasso}
-scatterD3(x = mtcars$wt, y = mtcars$mpg, lab = rownames(mtcars), lasso = TRUE)
+mtcars$names <- rownames(mtcars)
+scatterD3(data = mtcars, x = wt, y = mpg, lab = names, lasso = TRUE)
 ```
 
 To undo the selection, just shift-click again.
@@ -130,10 +311,37 @@ You can specify a custom JavaScript callback function to be called by passing it
 Here is an example which shows an alert with selected point labels :
 
 ```{r lasso_callback}
-scatterD3(x = mtcars$wt, y = mtcars$mpg, lab = rownames(mtcars), 
+mtcars$names <- rownames(mtcars)
+scatterD3(data = mtcars,
+          x = wt, y = mpg, lab = names, 
           lasso = TRUE,
           lasso_callback = "function(sel) {alert(sel.data().map(function(d) {return d.lab}).join('\\n'));}")
 ```
+
+## Custom labels positions export
+
+The "gear menu" allows to export the current custom labels position as a CSV file for later reuse.
+
+For example, if you change the labels placement in the following plot :
+
+```{r labels_export}
+mtcars$names <- rownames(mtcars)
+scatterD3(data = mtcars, x = wt, y = mpg, lab = names)
+```
+
+You can then open the menu and select *Export labels positions* to save them into a CSV file. If you want to use these positions in another plot, you can do something like that :
+
+```{r labels_export_ggplot2, eval = FALSE}
+labels <- read.csv("scatterD3_labels.csv")
+library(ggplot2)
+ggplot() +
+  geom_point(data = mtcars, aes(x=wt, y=mpg)) +
+  geom_text(data = labels,
+            aes(x = scatterD3_label_x,
+                y = scatterD3_label_y,
+                label = scatterD3_label))
+```
+
 
 
 ## Other options
@@ -162,14 +370,15 @@ Enabling transitions in your shiny app is quite simple, you just have to add the
 
 ### Additional controls : Reset zoom and SVG export
 
-Furthermore, `scatterD3` provides some additional handlers for two interactive features : SVG export and zoom resetting.
+Furthermore, `scatterD3` provides some additional handlers for three interactive features : SVG export, zoom resetting and lasso selection. Those are already accessible via the "gear menu", but you may want to replace it with custom form controls.
 
 By default, you just have to give the following `id` to the corresponding form controls :
 
 - `#scatterD3-reset-zoom` : reset zoom to default on click
 - `#scatterD3-svg-export` : link to download the currently displayed figure as an SVG file
+- `#scatterD3-lasso-toggle` : toggle lasso selection
 
-If you are not happy with these ids, you can specify their names yourself with the arguments `dom_id_svg_export` and `dom_id_reset_zoom`.
+If you are not happy with these ids, you can specify their names yourself with the arguments `dom_id_svg_export`, `dom_id_reset_zoom` and `dom_id_toggle`.
 
 ### Sample app and source code
 
