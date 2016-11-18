@@ -66,6 +66,10 @@ scatterD3(data = mtcars, x = wt, y = mpg, fixed = TRUE,
                              stroke_width = 1,
                              stroke_dasharray = 5))
 
+## ----log_scales----------------------------------------------------------
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
+          x_log = TRUE, y_log = TRUE)
+
 ## ----axis_limits---------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, xlim=c(0,10), ylim=c(10,35))
 
@@ -78,6 +82,20 @@ scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
           xlab = "Weight", ylab = "Mpg", 
           axes_font_size = "120%",
           legend_font_size = "14px")
+
+## ----cust_left_margin----------------------------------------------------
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
+          left_margin = 80)
+
+## ----caption_character---------------------------------------------------
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
+          caption = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam aliquam egestas pretium. Donec auctor semper vestibulum. Phasellus in tempor lacus. Maecenas vehicula, ipsum id malesuada placerat, diam lorem aliquet lectus, non lacinia quam leo quis eros.")
+
+## ----caption_list--------------------------------------------------------
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
+          caption = list(title = "Caption title",
+                         subtitle = "Caption subtitle",
+                         text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam aliquam egestas pretium. Donec auctor semper vestibulum. Phasellus in tempor lacus. Maecenas vehicula, ipsum id malesuada placerat, diam lorem aliquet lectus, non lacinia quam leo quis eros."))
 
 ## ----cust_tooltips-------------------------------------------------------
 tooltips <- paste("This is an incredible <strong>", rownames(mtcars),"</strong><br />with ", 
@@ -133,15 +151,19 @@ scatterD3(data = mtcars,
 mtcars$names <- rownames(mtcars)
 scatterD3(data = mtcars, x = wt, y = mpg, lab = names)
 
+## ----labels_export_scatterD3, eval = FALSE-------------------------------
+#  labels <- read.csv("scatterD3_labels.csv")
+#  scatterD3(data = mtcars, x = wt, y = mpg, lab = names, labels_positions = labels)
+
 ## ----labels_export_ggplot2, eval = FALSE---------------------------------
 #  labels <- read.csv("scatterD3_labels.csv")
 #  library(ggplot2)
 #  ggplot() +
 #    geom_point(data = mtcars, aes(x=wt, y=mpg)) +
 #    geom_text(data = labels,
-#              aes(x = scatterD3_label_x,
-#                  y = scatterD3_label_y,
-#                  label = scatterD3_label))
+#              aes(x = lab_x,
+#                  y = lab_y,
+#                  label = lab))
 
 ## ----cust_arrows---------------------------------------------------------
 scatterD3(x = c(1, 0.9, 0.7, 0.2, -0.4, -0.5), xlab = "x",

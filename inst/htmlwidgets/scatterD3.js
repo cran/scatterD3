@@ -51,20 +51,20 @@ function scatterD3() {
     // Text labels dragging function
     var dragging = false;
     drag = d3.drag()
-	.subject(function(d) {
+	.subject(function(d, i) {
             var size = (d.size_var === undefined) ? settings.point_size : scales.size(d.size_var);
-            var dx = (d.lab_dx === undefined) ? 0 : d.lab_dx;
-            var dy = (d.lab_dx === undefined) ? default_label_dy(size, d.y, d.type_var, settings) : d.lab_dy;
+            var dx = get_label_dx(d, i, settings, scales);
+            var dy = get_label_dy(d, i, settings, scales);
             return {x:scales.x(d.x)+dx, y:scales.y(d.y)+dy};
 	})
-	.on('start', function(d) {
+	.on('start', function(d, i) {
 	    if (!d3.event.sourceEvent.shiftKey) {
 		dragging = true;
 		d3.select(this).style('fill', '#000');
 		var chart = d3.select(this).node().parentNode;
 		var size = (d.size_var === undefined) ? settings.point_size : scales.size(d.size_var);
-		var dx = (d.lab_dx === undefined) ? 0 : d.lab_dx;
-		var dy = (d.lab_dx === undefined) ? default_label_dy(size, d.y, d.type_var, settings) : d.lab_dy;
+		var dx = get_label_dx(d, i, settings, scales);
+		var dy = get_label_dy(d, i, settings, scales);
 		d3.select(chart).append("svg:line")
 		    .attr("id", "scatterD3-drag-line")
 		    .attr("x1", scales.x(d.x)).attr("x2", scales.x(d.x) + dx)
@@ -220,7 +220,7 @@ function scatterD3() {
 		// Gear icon
 		var gear = svg.append("g")
 		    .attr("class", "gear-menu")
-		    .attr("transform", "translate(" + (width - 36) + ", 6)");
+		    .attr("transform", "translate(" + (width - 40) + "," + 10 + ")");
 		gear.append("rect")
 		    .attr("class", "gear-toggle")
 		    .attr("width", "25")
@@ -255,11 +255,13 @@ function scatterD3() {
 			.html("Toggle lasso on");
 		}
 
-		if (settings.has_labels) {
-                    menu.append("li")
-			.append("a")
-			.on("click", function() { export_labels_position(this, data, settings, scales); })
-			.html("Export labels positions");
+                var label_export = menu.append("li")
+		    .attr("class", "label-export");
+		label_export.append("a")
+		    .on("click", function() { export_labels_position(this, data, settings, scales); })
+		    .html("Export labels positions");
+		if (!settings.has_labels) {
+		    label_export.style("display", "none");
 		}
 
 		gear.on("click", function(d, i){
@@ -280,6 +282,57 @@ function scatterD3() {
                     }
 		});
             }
+
+	    var caption_parent = d3.select(svg.node().parentNode);
+	    var caption = caption_parent.select(".scatterD3-caption");
+
+	    // Caption
+	    if (settings.caption) {
+		if (settings.caption.title)
+		    caption.append("h1").attr("class", "title").html(settings.caption.title);
+		if (settings.caption.subtitle)
+		    caption.append("h2").attr("class", "subtitle").html(settings.caption.subtitle);
+		if (settings.caption.text)
+		    caption.append("p").attr("class", "caption").html(settings.caption.text);
+		caption.style("top", dims.svg_height + "px");
+
+		// Caption icon
+		var caption_top_margin = settings.menu ? 35 : 10;
+		var caption_icon = svg.append("g")
+		    .attr("class", "caption-icon")
+		    .attr("transform", "translate(" + (dims.svg_width - 40) + "," + (dims.svg_height - 71) + ")")
+		    .attr("transform", "translate(" + (dims.svg_width - 40) + "," + caption_top_margin + ")");
+		caption_icon.append("rect")
+		    .attr("class", "caption-toggle")
+		    .attr("width", "25")
+		    .attr("height", "25")
+		    .style("fill", "#FFFFFF");
+		caption_icon.append("path")
+		    .attr("d", caption_path())
+		    .attr("transform", "translate(4,4)")
+		    .style("fill", "#666666");
+
+		caption_icon.on("click", function() {
+		    if (!caption.classed("visible")) {
+			caption.classed("visible", true);
+			caption.style("margin-top", -caption.node().getBoundingClientRect().height + "px");
+		    }
+		    else {
+			caption.classed("visible", false);
+			caption.style("margin-top", "0px");
+		    }
+		});
+
+		caption.on("click", function() {
+		    caption.classed("visible", false);
+		    caption.style("margin-top", "0px");
+		});
+		
+	    }
+	    // No title
+	    else {
+		caption.remove();
+	    }
 
         });
     }
@@ -369,7 +422,7 @@ function scatterD3() {
 	var dot = chart_body.selectAll(".dot")
 	    .data(data.filter(point_filter), key);
 	dot.enter().append("path").call(function(sel) {dot_init(sel, settings, scales);})
-	    .merge(dot).transition().duration(1000).call(function(sel) {dot_formatting(sel, settings, scales);});
+	    .merge(dot).call(function(sel) {dot_init(sel, settings, scales);}).transition().duration(1000).call(function(sel) {dot_formatting(sel, settings, scales);});
 	dot.exit().transition().duration(1000).attr("transform", "translate(0,0)").remove();
 	// Add arrows
 	var arrow = chart_body.selectAll(".arrow")
@@ -401,6 +454,12 @@ function scatterD3() {
             labels.enter().append("text").call(label_init).call(drag)
 		.merge(labels).transition().duration(1000).call(function(sel) { label_formatting(sel, settings, scales); });
             labels.exit().transition().duration(1000).attr("transform", "translate(0,0)").remove();
+	}
+
+	if (settings.has_labels_changed) {
+	    var label_export = d3.select("#scatterD3-menu-" + settings.html_id)
+		.select(".label-export");
+	    label_export.style("display", settings.has_labels ? "block" : "none");
 	}
 
 	if (settings.legend_changed) {
@@ -542,7 +601,17 @@ function scatterD3() {
             svg.select(".gear-menu")
 		.attr("transform", "translate(" + (width - 40) + "," + 10 + ")");
         }
+        // Move caption icon and div
+        if (settings.caption) {
+	    var caption_top_margin = settings.menu ? 35 : 10;
+            svg.select(".caption-icon")
+	    	.attr("transform", "translate(" + (dims.svg_width - 40) + "," + caption_top_margin + ")");
+	    d3.select(svg.node().parentNode)
+		.select(".scatterD3-caption")
+		.style("top", dims.svg_height + "px");
+        }
 
+	
     };
 
 
@@ -667,6 +736,13 @@ HTMLWidgets.widget({
 		.attr("class", "scatterD3-tooltip");
         }
 
+	// Create title and subtitle div
+        var caption = d3.select(el).select(".scatterD3-caption");
+        if (caption.empty()) {
+            caption = d3.select(el).append("div")
+		.attr("class", "scatterD3-caption");
+        }
+
         // Create menu div
         var menu = d3.select(el).select(".scatterD3-menu");
         if (menu.empty()) {
@@ -700,11 +776,15 @@ HTMLWidgets.widget({
 
 		// convert data to d3 format
 		var data = HTMLWidgets.dataframeToD3(obj.data);
+		if (obj.settings.labels_positions) {
+		    obj.settings.labels_positions = HTMLWidgets.dataframeToD3(obj.settings.labels_positions);
+		}
 
 		// If no transitions, remove chart and redraw it
 		if (!obj.settings.transitions) {
                     svg.selectAll("*:not(style)").remove();
 		    menu.selectAll("li").remove();
+		    caption.selectAll("*").remove();
 		}
 
 		// Complete draw
@@ -732,6 +812,8 @@ HTMLWidgets.widget({
                     obj.settings.size_range_changed = !array_equal(scatter.settings().size_range, obj.settings.size_range);
                     obj.settings.ellipses_changed = scatter.settings().ellipses != obj.settings.ellipses;
 		    obj.settings.colors_changed = scatter.settings().colors != obj.settings.colors;
+		    obj.settings.x_log_changed = scatter.settings().x_log != obj.settings.x_log;
+		    obj.settings.y_log_changed = scatter.settings().y_log != obj.settings.y_log;
 
 		    obj.settings.had_color_var = scatter.settings().has_color_var;
 		    obj.settings.had_symbol_var = scatter.settings().has_symbol_var;
@@ -758,6 +840,8 @@ HTMLWidgets.widget({
 			obj.settings.has_labels_changed ||
 			changed("ellipses_data") ||
 			obj.settings.ellipses_changed ||
+			obj.settings.x_log_changed ||
+			obj.settings.y_log_changed ||
 			changed("opacity_var") ||
 			changed("lines");
 

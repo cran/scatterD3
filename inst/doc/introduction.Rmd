@@ -169,16 +169,22 @@ scatterD3(data = mtcars, x = wt, y = mpg, fixed = TRUE,
 ```
 
 
-## Axis limits
+## Scales, axes and legend
+
+The `x_log` and `y_log` arguments allow to use logarithmic scales on the `x`
+and `y` values. Note that there must not be any value inferior or equal to
+zero in this case :
+
+```{r log_scales}
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
+          x_log = TRUE, y_log = TRUE)
+```
 
 You can manually specify the `x` or `y` axis limits with the `xlim` and `ylim` arguments :
 
 ```{r axis_limits}
 scatterD3(data = mtcars, x = wt, y = mpg, xlim=c(0,10), ylim=c(10,35))
 ```
-
-
-## Axes and legend customization
 
 You can customize the value of the axes and legend labels with `xlab`, `ylab`, `col_lab`, `symbol_lab` and `size_lab` :
 
@@ -199,6 +205,36 @@ scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
 ```
 
 You can provide any CSS compatible value, wether a fixed size such as `2em` or a relative one like `95%`.
+
+If the left plot margin is not big enough and your y axis labels are
+truncated, you can adjust it with the `left_margin` argument :
+
+```{r cust_left_margin}
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
+          left_margin = 80)
+```
+
+## Caption
+
+You can add an optional caption to your plot, which will be shown when
+clicking on a "info sign" icon in the top right of your plot.
+
+To do so, use the `caption` argument with either a single character string :
+
+```{r caption_character}
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
+          caption = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam aliquam egestas pretium. Donec auctor semper vestibulum. Phasellus in tempor lacus. Maecenas vehicula, ipsum id malesuada placerat, diam lorem aliquet lectus, non lacinia quam leo quis eros.")
+```
+
+Or a list with the `title`, `subtitle` and `text` elements :
+
+```{r caption_list}
+scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
+          caption = list(title = "Caption title",
+                         subtitle = "Caption subtitle",
+                         text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam aliquam egestas pretium. Donec auctor semper vestibulum. Phasellus in tempor lacus. Maecenas vehicula, ipsum id malesuada placerat, diam lorem aliquet lectus, non lacinia quam leo quis eros."))
+```
+
 
 
 ## Custom tooltips
@@ -286,7 +322,7 @@ Ellipses are computed by the  `ellipse.default()` function of the [ellipse packa
 
 ## Gear menu
 
-The "gear menu" is a small menu which can be displayed by clocking on the "gear" icon on the top-right corner of the plot. It allows to reset the zoom, export the current graph to SVG, and toggle lasso selection.
+The "gear menu" is a small menu which can be displayed by clicking on the "gear" icon on the top-right corner of the plot. It allows to reset the zoom, export the current graph to SVG, and toggle lasso selection.
 
 It is displayed by default, but you can hide it with the `menu = FALSE` argument.
 
@@ -329,7 +365,17 @@ mtcars$names <- rownames(mtcars)
 scatterD3(data = mtcars, x = wt, y = mpg, lab = names)
 ```
 
-You can then open the menu and select *Export labels positions* to save them into a CSV file. If you want to use these positions in another plot, you can do something like that :
+You can then open the menu and select *Export labels positions* to save them
+into a CSV file. If you want to reuse these positions, you can use the
+`labels_positions` argument from `scatterD3` :
+
+```{r labels_export_scatterD3, eval = FALSE}
+labels <- read.csv("scatterD3_labels.csv")
+scatterD3(data = mtcars, x = wt, y = mpg, lab = names, labels_positions = labels)
+```
+
+You can also use this file to reuse coordinates in a plot from a different
+package. The following example should work with `ggplot2` :
 
 ```{r labels_export_ggplot2, eval = FALSE}
 labels <- read.csv("scatterD3_labels.csv")
@@ -337,9 +383,9 @@ library(ggplot2)
 ggplot() +
   geom_point(data = mtcars, aes(x=wt, y=mpg)) +
   geom_text(data = labels,
-            aes(x = scatterD3_label_x,
-                y = scatterD3_label_y,
-                label = scatterD3_label))
+            aes(x = lab_x,
+                y = lab_y,
+                label = lab))
 ```
 
 
@@ -384,3 +430,15 @@ If you are not happy with these ids, you can specify their names yourself with t
 
 The
 [sample scatterD3 shiny app](http://data.nozav.org/app/scatterD3/) allows you to see the different features described here. You can [check its source code on GitHub](https://github.com/juba/scatterD3_shiny_app) for a better understanding of the different arguments.
+
+## Known problems
+
+Due to a lack of support of the `download` attribute in RStudio's interface, two problems may occur when exporting a plot to SVG, or labels positions to CSV :
+
+- the file name suggested in the file save dialog is the data URI. You have to replace it with the name of your choice, and the correct extension (`.svg` or `.csv`).
+
+- when replacing an existing file, if the data to be saved are shorter than the file, it seems that RStudio will just replace the beginning of the file with the new data, but keep existing file content at the end. A workaround is either to always save to a new file, or open the plot in a modern browser before exporting.
+
+
+
+
