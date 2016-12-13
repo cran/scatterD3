@@ -47,8 +47,8 @@ scatterD3(data = mtcars, x = wt, y = mpg, col_var = disp)
 scatterD3(data=mtcars, x=mpg, y=wt, opacity_var = drat)
 
 ## ----lines---------------------------------------------------------------
-scatterD3(data = mtcars, x = wt, y = mpg, fixed = TRUE, 
-          lines = data.frame(slope = 1, intercept = 0))
+scatterD3(data = mtcars, x = wt, y = mpg, 
+          lines = data.frame(slope = -5.344, intercept = 37.285))
 
 ## ----lines_style---------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, 
@@ -116,9 +116,15 @@ scatterD3(data = mtcars, x = wt, y = mpg,
 #  scatterD3(data = mtcars, x = wt, y = mpg,
 #    click_callback = "function(id, index) {
 #    if(id && typeof(Shiny) != 'undefined') {
-#        Shiny.onInputChange(id + '_selected', index);
+#        Shiny.onInputChange('selected_point', index);
 #    }
 #  }")
+
+## ----click_callback_shiny_ui, eval = FALSE-------------------------------
+#  textOutput("click_selected")
+
+## ----click_callback_shiny_server, eval = FALSE---------------------------
+#  output$click_selected <- renderText(paste0("Clicked point : ", input$selected_point))
 
 ## ----zoom_callback-------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg,
@@ -169,5 +175,6 @@ scatterD3(data = mtcars, x = wt, y = mpg, lab = names)
 scatterD3(x = c(1, 0.9, 0.7, 0.2, -0.4, -0.5), xlab = "x",
           y = c(1, 0.1, -0.5, 0.5, -0.6, 0.7), ylab = "y",
           lab = LETTERS[1:6], type_var = c("point", rep("arrow", 5)),
-          unit_circle = TRUE, fixed = TRUE, xlim = c(-1.2, 1.2))
+          unit_circle = TRUE, fixed = TRUE, 
+          xlim = c(-1.2, 1.2), ylim = c(-1.2, 1.2))
 

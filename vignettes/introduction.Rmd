@@ -140,8 +140,8 @@ In addition to your data points, you can add to your scatterplot. This is done v
 For example, if you want to add a 1:1 line :
 
 ```{r lines}
-scatterD3(data = mtcars, x = wt, y = mpg, fixed = TRUE, 
-          lines = data.frame(slope = 1, intercept = 0))
+scatterD3(data = mtcars, x = wt, y = mpg, 
+          lines = data.frame(slope = -5.344, intercept = 37.285))
 ```
 
 You can style your lines by adding `stroke`, `stroke_width` and `stroke_dasharray` columns. These columns values will be added as [corresponding styles](https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Fills_and_Strokes) to the generated SVG line. So if you want a wide dashed red horizontal line :
@@ -278,10 +278,23 @@ One usage can be to pass the index of the clicked point back to Shiny when `scat
 scatterD3(data = mtcars, x = wt, y = mpg,
   click_callback = "function(id, index) {
   if(id && typeof(Shiny) != 'undefined') {
-      Shiny.onInputChange(id + '_selected', index);
+      Shiny.onInputChange('selected_point', index);
   }
 }")
 ```
+
+You could then add something like this in your Shiny app `ui` :
+
+```{r click_callback_shiny_ui, eval = FALSE}
+textOutput("click_selected")
+```
+
+And this in `server` :
+
+```{r click_callback_shiny_server, eval = FALSE}
+output$click_selected <- renderText(paste0("Clicked point : ", input$selected_point))
+```
+
 
 Thanks to [detule](https://github.com/detule) and [harveyl888](https://github.com/harveyl888) for the code.
 
@@ -398,7 +411,8 @@ Finally, and for more specific use cases, you can represent some points as an ar
 scatterD3(x = c(1, 0.9, 0.7, 0.2, -0.4, -0.5), xlab = "x",
           y = c(1, 0.1, -0.5, 0.5, -0.6, 0.7), ylab = "y",
           lab = LETTERS[1:6], type_var = c("point", rep("arrow", 5)),
-          unit_circle = TRUE, fixed = TRUE, xlim = c(-1.2, 1.2))
+          unit_circle = TRUE, fixed = TRUE, 
+          xlim = c(-1.2, 1.2), ylim = c(-1.2, 1.2))
 ```
 
 

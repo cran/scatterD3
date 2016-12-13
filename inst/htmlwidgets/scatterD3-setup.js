@@ -32,8 +32,8 @@ function setup_sizes (width, height, settings) {
     
     // Fixed ratio
     if (settings.fixed) {
-        dims.height = Math.min(dims.height, dims.width);
-        dims.width = dims.height;
+         dims.height = Math.min(dims.height, dims.width);
+         dims.width = dims.height;
     }
 
     dims.total_width = dims.width + margins.left + margins.right + dims.legend_width;
@@ -72,11 +72,28 @@ function setup_scales (dims, settings, data) {
     var min_x, min_y, max_x, max_y, gap_x, gap_y;
     var scales = {};
 
+    // if data is empty
+    if (data.length == 0) {
+	settings.x_categorical = false;
+	settings.y_categorical = false;
+	data = [{x:0, y:0, key:1}];
+    }
+    
     // x and y limits
     if (settings.xlim === null) {
         min_x = d3.min(data, function(d) { return(d.x);} );
         max_x = d3.max(data, function(d) { return(d.x);} );
         gap_x = (max_x - min_x) * 0.2;
+	if (min_x == max_x) {
+	    min_x = min_x * 0.8;
+	    max_x = max_x * 1.2;
+	    gap_x = 0;
+	}
+	if (min_x == 0 && max_x == 0) {
+	    min_x = -1;
+	    max_x = 1;
+	    gap_x = 0.1;
+	}
     } else {
         min_x = settings.xlim[0];
         max_x = settings.xlim[1];
@@ -86,37 +103,61 @@ function setup_scales (dims, settings, data) {
         min_y = d3.min(data, function(d) { return(d.y);} );
         max_y = d3.max(data, function(d) { return(d.y);} );
         gap_y = (max_y - min_y) * 0.2;
+	if (min_y == max_y) {
+	    min_y = min_y * 0.8;
+	    max_y = max_y * 1.2;
+	    gap_y = 0;
+	}
+	if (min_y == 0 && max_y == 0) {
+	    min_y = -1;
+	    max_y = 1;
+	    gap_y = 0.1;
+	}
     } else {
         min_y = settings.ylim[0];
         max_y = settings.ylim[1];
         gap_y = 0;
     }
 
+    min_x = settings.x_log ? min_x * 0.8 : min_x - gap_x;
+    max_x = settings.x_log ? max_x * 1.3 : max_x + gap_x;
+    min_y = settings.y_log ? min_y * 0.9 : min_y - gap_y;
+    max_y = settings.y_log ? max_y * 1.1 : max_y + gap_y;
+    
     // Fixed ratio
-    if (settings.fixed && !(settings.xlim !== null && settings.ylim !== null)) {
-        if (settings.xlim === null && settings.ylim === null) {
-	    min_x = min_y = Math.min(min_x, min_y);
-	    max_x = max_y = Math.max(max_x, max_y);
-	    gap_x = gap_y = Math.max(gap_x, gap_y);
-        }
-        if (settings.xlim !== null) {
-	    min_y = min_x;
-	    max_y = max_x;
-	    gap_y = gap_x;
-        }
-        if (settings.ylim !== null) {
-	    min_x = min_y;
-	    max_x = max_y;
-	    gap_x = gap_y;
-        }
+    var range_x = max_x - min_x;
+    var mid_x = (max_x + min_x) / 2;
+    var range_y = max_y - min_y;
+    var mid_y = (max_y + min_y) / 2;
+    if (settings.fixed && settings.xlim === null && settings.ylim === null) {
+	var ratio = (range_y / range_x);
+	if (ratio > 1) {
+	    range_x = range_x * ratio;
+	    min_x = mid_x - range_x / 2;
+	    max_x = mid_x + range_x / 2;
+	} else {
+	    range_y = range_y / ratio;
+	    min_y = mid_y - range_y / 2;
+	    max_y = mid_y + range_y / 2;
+	}
+    }
+    if (settings.fixed && settings.xlim != null) {
+	range_y = range_x;
+	min_y = mid_y - range_y / 2;
+	max_y = mid_y + range_y / 2;
+    }
+    if (settings.fixed && settings.ylim != null) {
+	range_x = range_y;
+	min_x = mid_x - range_x / 2;
+	max_x = mid_x + range_x / 2;
     }
 
+    
     // x, y scales
     if (!settings.x_categorical) {
 	scales.x = settings.x_log ? d3.scaleLog() : d3.scaleLinear();
-	var x_domain = settings.x_log ? [min_x * 0.8, max_x * 1.3] : [min_x - gap_x, max_x + gap_x];
         scales.x.range([0, dims.width])
-	    .domain(x_domain);
+	    .domain([min_x, max_x]);
     } else {
 	scales.x = d3.scalePoint()
 	    .range([0, dims.width])
@@ -125,9 +166,8 @@ function setup_scales (dims, settings, data) {
     }
     if (!settings.y_categorical) {
 	scales.y = settings.y_log ? d3.scaleLog(): d3.scaleLinear();
-	var y_domain = settings.y_log ? [min_y * 0.9, max_y * 1.1] : [min_y - gap_y, max_y + gap_y];
         scales.y.range([dims.height, 0])
-	    .domain(y_domain);
+	    .domain([min_y, max_y]);
     } else {
 	scales.y = d3.scalePoint()
 	    .range([dims.height, 0])
@@ -139,12 +179,15 @@ function setup_scales (dims, settings, data) {
     scales.y_orig = scales.y;
     // x and y axis functions
     scales.xAxis = d3.axisBottom(scales.x)
-        .tickSize(-dims.height)
-	.tickFormat(d3.format(""));
+        .tickSize(-dims.height);
+    if (!settings.x_categorical) {
+	scales.xAxis.tickFormat(d3.format(""));
+    }
     scales.yAxis = d3.axisLeft(scales.y)
-        .tickSize(-dims.width)
-    	.tickFormat(d3.format(""));;
-
+        .tickSize(-dims.width);
+    if (!settings.y_categorical) {
+	scales.yAxis.tickFormat(d3.format(""));
+    }
     // Continuous color scale
     if (settings.col_continuous) {
 	scales.color = d3.scaleSequential(d3.interpolateViridis)

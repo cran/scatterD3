@@ -1,3 +1,14 @@
+scatterD3 0.8.1
+------------------------------------------------------
+
+* Bugfix : categorical axes labels shown as NaN (thanks @zji90)
+* Bugfix : plot not centered when fixed = TRUE (thanks @jon-nagra)
+* Bugfix : incorrect plot when only one point (thanks @CUinNYC)
+* Bugfix : xlim and ylim not taken into account when updating chart (thanks @CUinNYC)
+* Bugfix : plot with no data should return an empty plot, not an error
+* Bugfix : tick marks must be put below axes labels
+
+
 scatterD3 0.8
 ------------------------------------------------------
 
