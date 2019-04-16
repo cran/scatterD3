@@ -1,13 +1,33 @@
-scatterD3 0.8.2
-------------------------------------------------------
+# scatterD3 0.9
+
+* Qualitative color palettes between 10 and 12 items now use ColorBrewer's schemePaired
+* Upgrade to d3 5.9.2 (with version conflicts patch)
+* Add documentation website with pkgdown
+* Keep the order of levels in legend if col_var or symbol_var is a factor (thanks @romanhaa)
+* Add `symbols` argument and custom symbol to value mapping (thanks @GiuseppeDiGuglielmo and @mmauri)
+* New `tooltip_position` argument to define tooltip placement (thanks @Tixierae)
+* Add `disable_wheel` argument to disable mousewheel zooming (thanks @romanhaa)
+* Add `colors` argument for continuous color variables (thanks @romanhaa)
+* Add `zoom_on` and `zoom_on_level` arguments for programmatic zooming (thanks @Tixierae)
+* Permanent lines between dot and labels above a certain distance
+* Add small white outline around labels
+* Add ability to specify custom values <=> sizes or opacities
+* Ignore empty "" domain values in legends
+* Don't show legend if it's corresponding _lab value is NA
+* First try at automatic label placement with `labels_positions = "auto"`
+* Complete code refactoring
+
+
+# scatterD3 0.8.2
+
 
 * Rename every d3 to d3v4 to avoid conflicts with other d3v3 htmlwidgets
 * Bugfix : zoom not working in RStudio (again)
 * Upgrade to d3 4.13.0 without patch for zoom-related problem
 
 
-scatterD3 0.8.1
-------------------------------------------------------
+# scatterD3 0.8.1
+
 
 * Bugfix : categorical axes labels shown as NaN (thanks @zji90)
 * Bugfix : plot not centered when fixed = TRUE (thanks @jon-nagra)
@@ -17,8 +37,7 @@ scatterD3 0.8.1
 * Bugfix : tick marks must be put below axes labels
 
 
-scatterD3 0.8
-------------------------------------------------------
+# scatterD3 0.8
 
 * New "caption" argument to add a toggable caption to the plot
 * New "x_log" and "y_log" arguments for x and y logarithmic scales
@@ -28,8 +47,7 @@ scatterD3 0.8
 * Bugfix : unable to export SVG when text contains non-Latin1 characters
 
 
-scatterD3 0.7
-------------------------------------------------------
+# scatterD3 0.7
 
 * Upgrade to d3v4
 * Add `data` argument to specify variables from a data frame with NSE
@@ -51,15 +69,14 @@ scatterD3 0.7
 * Bugfix : blank plot when only one color passed to `colors` (thanks @chewth)
 
 
-scatterD3 0.6.2
-------------------------------------------------------
+# scatterD3 0.6.2
 
 * Darker points color during lasso selection
 * Bugfix : Remove any previous anchor from clip-path urls
 * Bugfix : deal with NA in size_var
 
-scatterD3 0.6.1
-------------------------------------------------------
+
+# scatterD3 0.6.1
 
 * New feature : d3 lasso plugin integration, initial work by @timelyportfolio
 * New feature : allow to draw confidence ellipses for all points or for col_var groups
@@ -70,8 +87,7 @@ scatterD3 0.6.1
 * Bugfix : convert NA to "NA" in color and symbol mapping variables
 
 
-scatterD3 0.5.1
-------------------------------------------------------
+# scatterD3 0.5.1
 
 * Fix zoom reset when several charts in the same shiny app
 * Switch to 20 colors ordinary scales if there are more than 10 color variable levels
@@ -80,8 +96,8 @@ scatterD3 0.5.1
 * Manage changes of unit_circle settings
 
 
-scatterD3 0.5
-------------------------------------------------------
+# scatterD3 0.5
+
 
 * Bugfixes for when several scatterD3 instances are in the same shiny app
 * Fix `fixed` 1:1 aspect ratio not working as intended
@@ -90,8 +106,8 @@ scatterD3 0.5
 * New `type_var` argument, which allows to selectively draw arrows (starting from origin) instead of points
 
 
-scatterD3 0.4
-------------------------------------------------------
+# scatterD3 0.4
+
 
 * A temporary line is drawn between text and point when dragging a label
 * Fix plots updating when several widgets are in the same shiny app
@@ -99,15 +115,15 @@ scatterD3 0.4
 * Fix clip-path URL problems when exporting to SVG
 
 
-scatterD3 0.3
-------------------------------------------------------
+# scatterD3 0.3
+
 
 * Charts integrated into a shiny app are now fully updatable : when data or settings change, the plot is updated with smooth transitions instead of being redrawn. See the `transitions` and `key_var` arguments.
 * HTML DOM id of elements linked to the "Reset zoom" and "Export to SVG" features can now be given as arguments.
 
 
-scatterD3 0.2
-------------------------------------------------------
+# scatterD3 0.2
+
 
 * Add `colors` argument to specify a custom set of point colors. A named vector can be used to directly map values to colors (Thanks @timelyportfolio)
 * Complete code reorganisation, much cleaner
@@ -119,7 +135,6 @@ scatterD3 0.2
 * Respect custom label position when zooming
 
 
-scatterD3 0.1.1
-------------------------------------------------------
+# scatterD3 0.1.1
 
 * First version

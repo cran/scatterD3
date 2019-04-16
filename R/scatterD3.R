@@ -11,11 +11,11 @@
 #'     data is not NULL
 #' @param point_size points size. Ignored if size_var is not NULL.
 #' @param labels_size text labels size
-#' @param labels_positions A data frame, as created by the
+#' @param labels_positions Either a data frame, as created by the
 #'     "Export labels positions" menu entry, giving each label x and y
-#'     position.
+#'     position, or the value `"auto"` to use an automatic labeler.
 #' @param point_opacity points opacity, as an integer (same opacity for all
-#'     points) or a vector of integers, or variable name if data is not NULL
+#'     points).
 #' @param fixed force a 1:1 aspect ratio
 #' @param col_var optional vector for points color mapping, or variable name
 #'     if data is not NULL
@@ -25,30 +25,44 @@
 #' @param colors vector of custom points colors. Colors must be defined as an
 #'     hexadecimal string (eg "#FF0000"). If \code{colors} is a named list or
 #'     a named vector, then the colors will be associated with their name
-#'     within \code{col_var}. Ignored for a continuous color scale.
+#'     within \code{col_var}. For a continuous color scale, can be a string giving
+#'     the interpolate function name from d3-scale-chromatic (for example,
+#'     "interpolatePurples")
 #' @param ellipses draw confidence ellipses for points or the different color
 #'     mapping groups
 #' @param ellipses_level confidence level for ellipses (0.95 by default)
 #' @param symbol_var optional vector for points symbol mapping, or variable
 #'     name if data is not NULL
+#' @param symbols vector of custom points symbols. Symbols must be defined as
+#'     character strings with the following possible values : "circle", "cross",
+#'     "diamond", "square", "star", "triangle", and "wye". If \code{symbols} is a
+#'     named list or a named vector, then the symbols will be associated with their
+#'     name within \code{symbol_var}.
 #' @param size_var optional vector for points size mapping, or variable name
 #'     if data is not NULL
 #' @param size_range numeric vector of length 2, giving the minimum and
 #'     maximum point sizes when mapping with size_var
-#' @param col_lab color legend title
-#' @param symbol_lab symbols legend title
-#' @param size_lab size legend title
+#' @param sizes named list or named vector of sizes. Each size 
+#'     will be associated by their name within `size_var`.
+#' @param col_lab color legend title. Set to NA to remove color legend entirely.
+#' @param symbol_lab symbols legend title. Set to NA to remove symbol legend entirely.
+#' @param size_lab size legend title. Set to NA to remove size legend entirely.
 #' @param key_var optional vector of rows ids, or variable name if data is not
 #'     NULL. This is passed as a key to d3, and is only added in shiny apps
 #'     where displayed rows are filtered interactively.
-#' @param type_var optional vector of points type : "point" for adot
+#' @param type_var optional vector of points type : "point" for a dot
 #'     (default), "arrow" for an arrow starting from the origin.
 #' @param opacity_var optional vector of points opacity (values between 0 and
 #'     1)
+#' @param opacities named list or named vector of opacities. Each opacity
+#'     will be associated by their name within `opacity_var`.
 #' @param url_var optional vector of URLs to be opened when a point is clicked
 #' @param unit_circle set tot TRUE to draw a unit circle
 #' @param tooltips logical value to display tooltips when hovering points
 #' @param tooltip_text optional character vector of tooltips text
+#' @param tooltip_position the tooltip position relative to its point. Must a
+#'     combination of "top" or "bottom" with "left" or "right" (default is
+#'     "bottom right").
 #' @param xlab x axis label
 #' @param ylab y axis label.
 #' @param axes_font_size font size for axes text (any CSS compatible value)
@@ -68,6 +82,9 @@
 #' @param zoom_callback the body of a JavaScript callback function whose
 #'     inputs are the new xmin, xmax, ymin and ymax after a zoom action is
 #'     triggered.
+#' @param zoom_on coordinates where to center zoom on plot draw or update.
+#' @param zoom_on_level zoom level on plot draw or update. Ignored if `zoom_on` is NULL.
+#' @param disable_wheel if TRUE, disable zooming with mousewheel.
 #' @param lines a data frame with at least the \code{slope} and
 #'     \code{intercept} columns, and as many rows as lines to add to
 #'     scatterplot. Style can be added with \code{stroke}, \code{stroke_width}
@@ -119,6 +136,7 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
                       point_size = 64, labels_size = 10,
                       labels_positions = NULL,
                       point_opacity = 1,
+                      opacities = NULL,
                       hover_size = 1,
                       hover_opacity = NULL,
                       fixed = FALSE,
@@ -128,9 +146,12 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
                       ellipses = FALSE,
                       ellipses_level = 0.95,
                       symbol_var = NULL,
+                      symbols = NULL,
                       size_var = NULL,
                       size_range = c(10,300),
-                      col_lab = NULL, symbol_lab = NULL,
+                      sizes = NULL,
+                      col_lab = NULL, 
+                      symbol_lab = NULL,
                       size_lab = NULL,
                       key_var = NULL,
                       type_var = NULL,
@@ -139,6 +160,7 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
                       url_var = NULL,
                       tooltips = TRUE,
                       tooltip_text = NULL,
+                      tooltip_position = "bottom right",
                       xlab = NULL, ylab = NULL,
                       html_id = NULL,
                       width = NULL, height = NULL,
@@ -154,6 +176,9 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
                       lasso_callback = NULL,
                       click_callback = NULL,
                       zoom_callback = NULL,
+                      zoom_on = NULL,
+                      zoom_on_level = NULL,
+                      disable_wheel = FALSE,
                       lines = data.frame(slope = c(0, Inf),
                                          intercept = c(0, 0),
                                          stroke_dasharray = c(5,5)),
@@ -168,12 +193,12 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
     if (is.null(symbol_lab)) symbol_lab <- deparse(substitute(symbol_var))
     if (is.null(size_lab)) size_lab <- deparse(substitute(size_var))
     opacity_lab <- deparse(substitute(opacity_var))
-    if (is.null(html_id)) html_id <- paste0("scatterD3-", paste0(sample(LETTERS,8,replace = TRUE),collapse = ""))
+    if (is.null(html_id)) html_id <- paste0("scatterD3-", paste0(sample(LETTERS, 8, replace = TRUE), collapse = ""))
 
     ## NSE
     if (!is.null(data)) {
-        null_or_name <- function(x) {
-            if (x != "NULL") return(data[, x])
+        null_or_name <- function(varname) {
+            if (varname != "NULL") return(data[, varname])
             else return(NULL)
         }
         ## Get variable names
@@ -186,6 +211,7 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
         opacity_var <- deparse(substitute(opacity_var))
         url_var <- deparse(substitute(url_var))
         key_var <- deparse(substitute(key_var))
+        type_var <- deparse(substitute(type_var))
         ## Get variable data if not "NULL"
         lab <- null_or_name(lab)
         col_var <- null_or_name(col_var)
@@ -194,6 +220,7 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
         opacity_var <- null_or_name(opacity_var)
         url_var <- null_or_name(url_var)
         key_var <- null_or_name(key_var)
+        type_var <- null_or_name(type_var)
     }
 
     x_categorical <- is.factor(x) || !is.numeric(x)
@@ -210,7 +237,7 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
             stop("Logarithmic scale and negative values in y")
         lines <- lines[!(lines$slope == Inf & lines$intercept == 0),]
     }
-    
+
     ## colors can be named
     ##  we'll need to convert named vector to a named list
     ##  for the JSON conversion
@@ -218,6 +245,22 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
         colors <- as.list(colors)
         if (!setequal(names(colors), unique(col_var))) warning("Set of colors and col_var values do not match")
     }
+    ## Idem for symbols
+    if (!is.null(symbols) && !is.null(names(symbols))) {
+        symbols <- as.list(symbols)
+        if (!setequal(names(symbols), unique(symbol_var))) warning("Set of symbols and symbol_var values do not match")
+    }
+    ## Idem for sizes
+    if (!is.null(sizes) && !is.null(names(sizes))) {
+        sizes <- as.list(sizes)
+        if (!setequal(names(sizes), unique(size_var))) warning("Set of sizes and size_var values do not match")
+    }
+    ## Idem for opacities
+    if (!is.null(opacities) && !is.null(names(opacities))) {
+        opacities <- as.list(opacities)
+        if (!setequal(names(opacities), unique(opacity_var))) warning("Set of opacities and opacity_var values do not match")
+    }
+
 
     ## Determine from the data if we have a continuous or ordinal color scale
     if (is.null(col_continuous)) {
@@ -231,11 +274,25 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
     if (is.character(caption)) {
         caption <- list(text = caption)
     }
-    
+
+    ## Tooltip position
+    tooltip_position_x <- gsub("^.* ([a-z]+) *$", "\\1", tooltip_position)
+    tooltip_position_y <- gsub("^ *([a-z]+) .*$", "\\1", tooltip_position)
+    if (!(tooltip_position_x %in% c("left", "right")) ||
+        !(tooltip_position_y %in% c("top", "bottom"))) {
+        warning("tooltip_position must be a combination of 'top' or 'bottom' and 'left' or 'right'.")
+        tooltip_position_x <- "right"
+        tooltip_position_y <- "bottom"
+    }
+
     ## data element
     data <- data.frame(x = x, y = y)
+    col_levels <- NULL
+    symbol_levels <- NULL
     if (!is.null(lab)) data <- cbind(data, lab = lab)
     if (!is.null(col_var) && !col_continuous) {
+        # Keep order of levels if factor
+        if (is.factor(col_var)) col_levels <- levels(col_var)
         col_var <- as.character(col_var)
         col_var[is.na(col_var)] <- "NA"
         data <- cbind(data, col_var = col_var)
@@ -246,6 +303,8 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
         data <- cbind(data, col_var = col_var)
     }
     if (!is.null(symbol_var)) {
+        # Keep order of levels if factor
+        if (is.factor(symbol_var)) symbol_levels <- levels(symbol_var)
         symbol_var <- as.character(symbol_var)
         symbol_var[is.na(symbol_var)] <- "NA"
         data <- cbind(data, symbol_var = symbol_var)
@@ -307,9 +366,16 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
     ## to apply updates and transitions in shiny app.
     hashes <- list()
     if (transitions) {
-        for (var in c("x", "y", "lab", "key_var", "col_var", "symbol_var", "size_var", "ellipses_data", "opacity_var", "lines")) {
+        for (var in c("x", "y", "lab", "key_var", "col_var", "symbol_var", "size_var", "ellipses_data", "opacity_var", "lines", "labels_positions")) {
             hashes[[var]] <- digest::digest(get(var), algo = "sha256")
         }
+    }
+
+    ## Disable automatic labels position if too many labels
+    n_lab <- sum(lab != "")
+    if (n_lab > 500 && !is.null(labels_positions) && labels_positions == "auto") {
+        warning(gettext("More than 500 labels, automatic labels positioning has been disabled"))
+        labels_positions <- NULL
     }
 
     ## create a list that contains the settings
@@ -320,6 +386,7 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
         labels_positions = labels_positions,
         point_size = point_size,
         point_opacity = point_opacity,
+        opacities = opacities,
         hover_size = hover_size,
         hover_opacity = hover_opacity,
         xlab = xlab,
@@ -327,25 +394,37 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
         has_labels = !is.null(lab),
         col_lab = col_lab,
         col_continuous = col_continuous,
+        col_levels = col_levels,
         colors = colors,
         ellipses = ellipses,
         ellipses_data = ellipses_data,
         symbol_lab = symbol_lab,
+        symbol_levels = symbol_levels,
+        symbols = symbols,
         size_range = size_range,
         size_lab = size_lab,
+        sizes = sizes,
         opacity_lab = opacity_lab,
+        opacities = opacities,
         unit_circle = unit_circle,
         has_color_var = !is.null(col_var),
         has_symbol_var = !is.null(symbol_var),
         has_size_var = !is.null(size_var),
         has_opacity_var = !is.null(opacity_var),
         has_url_var = !is.null(url_var),
-        has_legend = !is.null(col_var) || !is.null(symbol_var) || !is.null(size_var),
+        has_legend = (!is.na(col_lab) && !is.null(col_var)) || 
+                     (!is.na(symbol_lab) && !is.null(symbol_var)) ||
+                     (!is.na(size_lab) && !is.null(size_var)),
         has_tooltips = tooltips,
         tooltip_text = tooltip_text,
+        tooltip_position_x = tooltip_position_x,
+        tooltip_position_y = tooltip_position_y,
         has_custom_tooltips = !is.null(tooltip_text),
         click_callback = htmlwidgets::JS(click_callback),
         zoom_callback = htmlwidgets::JS(zoom_callback),
+        zoom_on = zoom_on,
+        zoom_on_level = zoom_on_level,
+        disable_wheel = disable_wheel,
         fixed = fixed,
         legend_width = legend_width,
         left_margin = left_margin,

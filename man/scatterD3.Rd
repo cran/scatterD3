@@ -7,24 +7,28 @@
 D3.js was created by Michael Bostock. See \url{http://d3js.org/}
 }
 \usage{
-scatterD3(x, y, data = NULL, lab = NULL, x_log = FALSE, y_log = FALSE,
-  point_size = 64, labels_size = 10, labels_positions = NULL,
-  point_opacity = 1, hover_size = 1, hover_opacity = NULL,
-  fixed = FALSE, col_var = NULL, col_continuous = NULL, colors = NULL,
+scatterD3(x, y, data = NULL, lab = NULL, x_log = FALSE,
+  y_log = FALSE, point_size = 64, labels_size = 10,
+  labels_positions = NULL, point_opacity = 1, opacities = NULL,
+  hover_size = 1, hover_opacity = NULL, fixed = FALSE,
+  col_var = NULL, col_continuous = NULL, colors = NULL,
   ellipses = FALSE, ellipses_level = 0.95, symbol_var = NULL,
-  size_var = NULL, size_range = c(10, 300), col_lab = NULL,
-  symbol_lab = NULL, size_lab = NULL, key_var = NULL, type_var = NULL,
-  opacity_var = NULL, unit_circle = FALSE, url_var = NULL,
-  tooltips = TRUE, tooltip_text = NULL, xlab = NULL, ylab = NULL,
-  html_id = NULL, width = NULL, height = NULL, legend_width = 150,
-  left_margin = 30, xlim = NULL, ylim = NULL,
-  dom_id_reset_zoom = "scatterD3-reset-zoom",
+  symbols = NULL, size_var = NULL, size_range = c(10, 300),
+  sizes = NULL, col_lab = NULL, symbol_lab = NULL, size_lab = NULL,
+  key_var = NULL, type_var = NULL, opacity_var = NULL,
+  unit_circle = FALSE, url_var = NULL, tooltips = TRUE,
+  tooltip_text = NULL, tooltip_position = "bottom right",
+  xlab = NULL, ylab = NULL, html_id = NULL, width = NULL,
+  height = NULL, legend_width = 150, left_margin = 30, xlim = NULL,
+  ylim = NULL, dom_id_reset_zoom = "scatterD3-reset-zoom",
   dom_id_svg_export = "scatterD3-svg-export",
   dom_id_lasso_toggle = "scatterD3-lasso-toggle", transitions = FALSE,
   menu = TRUE, lasso = FALSE, lasso_callback = NULL,
-  click_callback = NULL, zoom_callback = NULL, lines = data.frame(slope =
-  c(0, Inf), intercept = c(0, 0), stroke_dasharray = c(5, 5)),
-  axes_font_size = "100\%", legend_font_size = "100\%", caption = NULL)
+  click_callback = NULL, zoom_callback = NULL, zoom_on = NULL,
+  zoom_on_level = NULL, disable_wheel = FALSE,
+  lines = data.frame(slope = c(0, Inf), intercept = c(0, 0),
+  stroke_dasharray = c(5, 5)), axes_font_size = "100\%",
+  legend_font_size = "100\%", caption = NULL)
 }
 \arguments{
 \item{x}{numerical vector of x values, or variable name if data is not NULL}
@@ -44,12 +48,15 @@ data is not NULL}
 
 \item{labels_size}{text labels size}
 
-\item{labels_positions}{A data frame, as created by the
+\item{labels_positions}{Either a data frame, as created by the
 "Export labels positions" menu entry, giving each label x and y
-position.}
+position, or the value `"auto"` to use an automatic labeler.}
 
 \item{point_opacity}{points opacity, as an integer (same opacity for all
-points) or a vector of integers, or variable name if data is not NULL}
+points).}
+
+\item{opacities}{named list or named vector of opacities. Each opacity
+will be associated by their name within `opacity_var`.}
 
 \item{hover_size}{factor for changing size when hovering points}
 
@@ -67,7 +74,9 @@ default, if \code{col_var} is numeric, not a factor, and has more than
 \item{colors}{vector of custom points colors. Colors must be defined as an
 hexadecimal string (eg "#FF0000"). If \code{colors} is a named list or
 a named vector, then the colors will be associated with their name
-within \code{col_var}. Ignored for a continuous color scale.}
+within \code{col_var}. For a continuous color scale, can be a string giving
+the interpolate function name from d3-scale-chromatic (for example,
+"interpolatePurples")}
 
 \item{ellipses}{draw confidence ellipses for points or the different color
 mapping groups}
@@ -77,23 +86,32 @@ mapping groups}
 \item{symbol_var}{optional vector for points symbol mapping, or variable
 name if data is not NULL}
 
+\item{symbols}{vector of custom points symbols. Symbols must be defined as
+character strings with the following possible values : "circle", "cross",
+"diamond", "square", "star", "triangle", and "wye". If \code{symbols} is a
+named list or a named vector, then the symbols will be associated with their
+name within \code{symbol_var}.}
+
 \item{size_var}{optional vector for points size mapping, or variable name
 if data is not NULL}
 
 \item{size_range}{numeric vector of length 2, giving the minimum and
 maximum point sizes when mapping with size_var}
 
-\item{col_lab}{color legend title}
+\item{sizes}{named list or named vector of sizes. Each size 
+will be associated by their name within `size_var`.}
 
-\item{symbol_lab}{symbols legend title}
+\item{col_lab}{color legend title. Set to NA to remove color legend entirely.}
 
-\item{size_lab}{size legend title}
+\item{symbol_lab}{symbols legend title. Set to NA to remove symbol legend entirely.}
+
+\item{size_lab}{size legend title. Set to NA to remove size legend entirely.}
 
 \item{key_var}{optional vector of rows ids, or variable name if data is not
 NULL. This is passed as a key to d3, and is only added in shiny apps
 where displayed rows are filtered interactively.}
 
-\item{type_var}{optional vector of points type : "point" for adot
+\item{type_var}{optional vector of points type : "point" for a dot
 (default), "arrow" for an arrow starting from the origin.}
 
 \item{opacity_var}{optional vector of points opacity (values between 0 and
@@ -106,6 +124,10 @@ where displayed rows are filtered interactively.}
 \item{tooltips}{logical value to display tooltips when hovering points}
 
 \item{tooltip_text}{optional character vector of tooltips text}
+
+\item{tooltip_position}{the tooltip position relative to its point. Must a
+combination of "top" or "bottom" with "left" or "right" (default is
+"bottom right").}
 
 \item{xlab}{x axis label}
 
@@ -154,6 +176,12 @@ inputs are html_id, and the index of the clicked element.}
 \item{zoom_callback}{the body of a JavaScript callback function whose
 inputs are the new xmin, xmax, ymin and ymax after a zoom action is
 triggered.}
+
+\item{zoom_on}{coordinates where to center zoom on plot draw or update.}
+
+\item{zoom_on_level}{zoom level on plot draw or update. Ignored if `zoom_on` is NULL.}
+
+\item{disable_wheel}{if TRUE, disable zooming with mousewheel.}
 
 \item{lines}{a data frame with at least the \code{slope} and
 \code{intercept} columns, and as many rows as lines to add to
