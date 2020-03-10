@@ -1,82 +1,82 @@
-## ---- include=FALSE------------------------------------------------------
+## ---- include=FALSE-----------------------------------------------------------
 library(scatterD3)
 knitr::opts_chunk$set(screenshot.force = FALSE)
 
-## ----basic, eval=FALSE---------------------------------------------------
+## ----basic, eval=FALSE--------------------------------------------------------
 #  library(scatterD3)
 #  scatterD3(x = mtcars$wt, y = mtcars$mpg)
 
-## ----basic_nse-----------------------------------------------------------
+## ----basic_nse----------------------------------------------------------------
 scatterD3(data = mtcars , x = wt, y = mpg)
 
-## ----basic_cust----------------------------------------------------------
+## ----basic_cust---------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, 
           point_size = 200, point_opacity = 0.5,
           colors = "#A94175")
 
-## ----hover_cust----------------------------------------------------------
+## ----hover_cust---------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, 
           point_size = 100, point_opacity = 0.5,
           hover_size = 4, hover_opacity = 1)
 
-## ----cust_tooltips-------------------------------------------------------
+## ----cust_tooltips------------------------------------------------------------
 tooltips <- paste("This is an incredible <strong>", rownames(mtcars),"</strong><br />with ", 
                   mtcars$cyl, "cylinders !")
 scatterD3(data = mtcars, x = wt, y = mpg, tooltip_text = tooltips)
 
-## ----tooltips_position---------------------------------------------------
+## ----tooltips_position--------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, tooltip_position = "top left")
 
-## ----categorical---------------------------------------------------------
+## ----categorical--------------------------------------------------------------
 mtcars$cyl_fac <- paste(mtcars$cyl, "cylinders")
 scatterD3(data = mtcars, x = cyl_fac, y = mpg)
 
-## ----categorical_left_margin---------------------------------------------
+## ----categorical_left_margin--------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = cyl_fac, left_margin = 80)
 
-## ----fixed---------------------------------------------------------------
+## ----fixed--------------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, 
           fixed = TRUE)
 
-## ----log_scales----------------------------------------------------------
+## ----log_scales---------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, 
           x_log = TRUE, y_log = TRUE)
 
-## ----axis_limits---------------------------------------------------------
+## ----axis_limits--------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, xlim=c(0,10), ylim=c(10,35))
 
-## ----cust_labels---------------------------------------------------------
+## ----cust_labels--------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, 
           xlab = "Weight", ylab = "Mpg")
 
-## ----cust_labels_size----------------------------------------------------
+## ----cust_labels_size---------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, 
           xlab = "Weight", ylab = "Mpg",
           axes_font_size = "160%")
 
-## ----labels--------------------------------------------------------------
+## ----labels-------------------------------------------------------------------
 mtcars$names <- rownames(mtcars)
 scatterD3(data = mtcars, x = wt, y = mpg, 
           lab = names)
 
-## ----labels_size---------------------------------------------------------
+## ----labels_size--------------------------------------------------------------
 mtcars$names <- rownames(mtcars)
 scatterD3(data = mtcars, x = wt, y = mpg, 
           lab = names, labels_size = 12)
 
-## ----labels_auto---------------------------------------------------------
+## ----labels_auto--------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, lab = names, 
           labels_positions = "auto")
 
-## ----labels_export-------------------------------------------------------
+## ----labels_export------------------------------------------------------------
 mtcars$names <- rownames(mtcars)
 scatterD3(data = mtcars, x = wt, y = mpg, lab = names)
 
-## ----labels_export_scatterD3, eval = FALSE-------------------------------
+## ----labels_export_scatterD3, eval = FALSE------------------------------------
 #  labels <- read.csv("scatterD3_labels.csv")
 #  scatterD3(data = mtcars, x = wt, y = mpg, lab = names, labels_positions = labels)
 
-## ----labels_export_ggplot2, eval = FALSE---------------------------------
+## ----labels_export_ggplot2, eval = FALSE--------------------------------------
 #  labels <- read.csv("scatterD3_labels.csv")
 #  library(ggplot2)
 #  ggplot() +
@@ -86,57 +86,57 @@ scatterD3(data = mtcars, x = wt, y = mpg, lab = names)
 #                  y = lab_y,
 #                  label = lab))
 
-## ----mapping_color-------------------------------------------------------
+## ----mapping_color------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl)
 
-## ----map_custom_colors---------------------------------------------------
+## ----map_custom_colors--------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
           colors = c("4" = "#ECD078", "8" = "#C02942", "6" = "#53777A"))
 
-## ----map_factor_levels_color---------------------------------------------
+## ----map_factor_levels_color--------------------------------------------------
 mtcars$cyl_o <- factor(mtcars$cyl, levels=c("8", "6", "4"))
 scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl_o)
 
-## ----map_continuous_color------------------------------------------------
+## ----map_continuous_color-----------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, col_var = disp)
 
-## ----custom_continuous_color---------------------------------------------
+## ----custom_continuous_color--------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, col_var = disp, colors = "interpolatePuRd")
 
-## ----map_size------------------------------------------------------------
+## ----map_size-----------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, size_var = hp)
 
-## ----map_size_range------------------------------------------------------
+## ----map_size_range-----------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, size_var = hp, 
           size_range = c(10,1000), point_opacity = 0.7)
 
-## ----custom_sizes--------------------------------------------------------
+## ----custom_sizes-------------------------------------------------------------
 scatterD3(data = mtcars, x = mpg, y = wt, size_var = cyl, 
   sizes = c("4" = 10, "6" = 100, "8" = 1000))
 
-## ----mapping-------------------------------------------------------------
+## ----mapping------------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl, symbol_var = gear)
 
-## ----map_factor levels---------------------------------------------------
+## ----map_factor levels--------------------------------------------------------
 mtcars$cyl_o <- factor(mtcars$cyl, levels=c("8", "6", "4"))
 scatterD3(data = mtcars, x = wt, y = mpg, symbol_var = cyl_o)
 
-## ----map_custom_symbols--------------------------------------------------
+## ----map_custom_symbols-------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, symbol_var = cyl,
           symbols = c("4" = "wye", "8" = "star", "6" = "triangle"))
 
-## ----opacity_var---------------------------------------------------------
+## ----opacity_var--------------------------------------------------------------
 scatterD3(data=mtcars, x=mpg, y=wt, opacity_var = drat)
 
-## ----custom_opacity------------------------------------------------------
+## ----custom_opacity-----------------------------------------------------------
 scatterD3(data = mtcars, x = mpg, y = wt, opacity_var = cyl, 
   opacities = c("4" = 1, "6" = 0.1, "8" = 0.5))
 
-## ----lines---------------------------------------------------------------
+## ----lines--------------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, 
           lines = data.frame(slope = -5.344, intercept = 37.285))
 
-## ----lines_style---------------------------------------------------------
+## ----lines_style--------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, 
           lines = data.frame(slope = 0, 
                              intercept = 30,
@@ -144,7 +144,7 @@ scatterD3(data = mtcars, x = wt, y = mpg,
                              stroke_width = 5,
                              stroke_dasharray = "10,5"))
 
-## ----lines_default-------------------------------------------------------
+## ----lines_default------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, fixed = TRUE, 
           lines = data.frame(slope = c(0, Inf), 
                              intercept = c(0, 0),
@@ -152,13 +152,13 @@ scatterD3(data = mtcars, x = wt, y = mpg, fixed = TRUE,
                              stroke_width = 1,
                              stroke_dasharray = 5))
 
-## ----ellipses------------------------------------------------------------
+## ----ellipses-----------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, ellipses = TRUE)
 
-## ----ellipses_col--------------------------------------------------------
+## ----ellipses_col-------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl, ellipses = TRUE)
 
-## ----cust_arrows---------------------------------------------------------
+## ----cust_arrows--------------------------------------------------------------
 df <- data.frame(x = c(1, 0.9, 0.7, 0.2, -0.4, -0.5),
                  y = c(1, 0.1, -0.5, 0.5, -0.6, 0.7),
                  type_var = c("point", rep("arrow", 5)),
@@ -167,48 +167,48 @@ scatterD3(data = df, x = x, y = y,
           type_var = type_var, lab = lab,
           fixed = TRUE, xlim = c(-1.2, 1.2), ylim = c(-1.2, 1.2))
 
-## ----unit_circle---------------------------------------------------------
+## ----unit_circle--------------------------------------------------------------
 scatterD3(data = df, x = x, y = y, 
           type_var = type_var,
           unit_circle = TRUE, fixed = TRUE, 
           xlim = c(-1.2, 1.2), ylim = c(-1.2, 1.2))
 
-## ----cust_labels2--------------------------------------------------------
+## ----cust_labels2-------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl, symbol_var = gear,
           xlab = "Weight", ylab = "Mpg", col_lab = "Cylinders", symbol_lab = "Gears")
 
-## ----rm_legend-----------------------------------------------------------
+## ----rm_legend----------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl, col_lab = NA)
 
-## ----cust_labels_legend_size---------------------------------------------
+## ----cust_labels_legend_size--------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
           legend_font_size = "16px")
 
-## ----cust_left_margin----------------------------------------------------
+## ----cust_left_margin---------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
           left_margin = 80)
 
-## ----caption_character---------------------------------------------------
+## ----caption_character--------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
           caption = "Lorem ipsum dolor sit amet, <strong>consectetur adipiscing elit</strong>. Nullam aliquam egestas pretium. Donec auctor semper vestibulum. Phasellus in tempor lacus. Maecenas vehicula, ipsum id malesuada placerat, diam lorem aliquet lectus, non lacinia quam leo quis eros.")
 
-## ----caption_list--------------------------------------------------------
+## ----caption_list-------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, col_var = cyl,
           caption = list(title = "Caption title",
                          subtitle = "Caption subtitle",
                          text = "Lorem ipsum dolor sit amet, <strong>consectetur adipiscing elit</strong>. Nullam aliquam egestas pretium. Donec auctor semper vestibulum. Phasellus in tempor lacus. Maecenas vehicula, ipsum id malesuada placerat, diam lorem aliquet lectus, non lacinia quam leo quis eros."))
 
-## ----urls----------------------------------------------------------------
+## ----urls---------------------------------------------------------------------
 mtcars$urls <- paste0("https://www.duckduckgo.com/?q=", rownames(mtcars))
 scatterD3(data = mtcars, x = wt, y = mpg, lab = names, url_var = urls)
 
-## ----click_callback------------------------------------------------------
+## ----click_callback-----------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg,
    click_callback = "function(id, index) {
    alert('scatterplot ID: ' + id + ' - Point index: ' + index) 
    }")
 
-## ---- click_callback_shiny, eval=FALSE-----------------------------------
+## ---- click_callback_shiny, eval=FALSE----------------------------------------
 #  scatterD3(data = mtcars, x = wt, y = mpg,
 #    click_callback = "function(id, index) {
 #    if(id && typeof(Shiny) != 'undefined') {
@@ -216,33 +216,43 @@ scatterD3(data = mtcars, x = wt, y = mpg,
 #    }
 #  }")
 
-## ----click_callback_shiny_ui, eval = FALSE-------------------------------
+## ----click_callback_shiny_ui, eval = FALSE------------------------------------
 #  textOutput("click_selected")
 
-## ----click_callback_shiny_server, eval = FALSE---------------------------
+## ----click_callback_shiny_server, eval = FALSE--------------------------------
 #  output$click_selected <- renderText(paste0("Clicked point : ", input$selected_point))
 
-## ----zoom_callback-------------------------------------------------------
+## ----zoom_callback------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg,
    zoom_callback = "function(xmin, xmax, ymin, ymax) {
     var zoom = '<strong>Zoom</strong><br />xmin = ' + xmin + '<br />xmax = ' + xmax + '<br />ymin = ' + ymin + '<br />ymax = ' + ymax;
     document.getElementById('zoomExample').innerHTML = zoom;
    }")
 
-## ----nomenu--------------------------------------------------------------
+## ----init_callback------------------------------------------------------------
+scatterD3(data = mtcars, x = wt, y = mpg,
+  init_callback = "function() {
+    var scales = this.scales();
+    var svg = this.svg();
+    new_x_axis = scales.xAxis.tickFormat(d3v5.format(',.0%'));
+    svg.select('.x.axis').call(new_x_axis);
+  }"
+)
+
+## ----nomenu-------------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, menu = FALSE)
 
-## ----lasso---------------------------------------------------------------
+## ----lasso--------------------------------------------------------------------
 mtcars$names <- rownames(mtcars)
 scatterD3(data = mtcars, x = wt, y = mpg, lab = names, lasso = TRUE)
 
-## ----lasso_callback------------------------------------------------------
+## ----lasso_callback-----------------------------------------------------------
 mtcars$names <- rownames(mtcars)
 scatterD3(data = mtcars,
           x = wt, y = mpg, lab = names, 
           lasso = TRUE,
           lasso_callback = "function(sel) {alert(sel.data().map(function(d) {return d.lab}).join('\\n'));}")
 
-## ----zoom_on-------------------------------------------------------------
+## ----zoom_on------------------------------------------------------------------
 scatterD3(data = mtcars, x = wt, y = mpg, zoom_on = c(1.615, 30.4), zoom_on_level = 6, lab = names)
 

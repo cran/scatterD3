@@ -1,4 +1,10 @@
-# scatterD3 0.9
+# scatterD3 0.9.1
+
+* New `init_callback` argument for (undocumented) callback on scatter object after init or update
+* Bugfix : ** operator not working in Safari / old RStudio
+* Bugfix : NS_ERROR_FAILURE with getBBox in labels
+
+# scatterD3 0.9.0
 
 * Qualitative color palettes between 10 and 12 items now use ColorBrewer's schemePaired
 * Upgrade to d3 5.9.2 (with version conflicts patch)
