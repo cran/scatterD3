@@ -6,8 +6,9 @@ function scatterD3() {
 		settings = {},
 		scales = {},
 		data = [],
+		positions = [],
 		svg,
-		zoom, drag,
+		zoom,
 		dragging = false;
 
 
@@ -19,7 +20,7 @@ function scatterD3() {
 			scales = setup_scales(chart);
 
 			// Root chart element and axes
-			var root = svg.append("g")
+			const root = svg.append("g")
 				.attr("class", "root")
 				.attr("transform", "translate(" + dims.margins.left + "," + dims.margins.top + ")");
 
@@ -32,7 +33,7 @@ function scatterD3() {
 			root.call(add_axes, chart);
 
 			// chart body
-			var chart_body = root.append("svg")
+			const chart_body = root.append("svg")
 				.attr("class", "chart-body")
 				.attr("width", dims.width)
 				.attr("height", dims.height);
@@ -43,7 +44,7 @@ function scatterD3() {
 			dots_create(chart);
 			arrows_create(chart);
 			ellipses_create(chart);
-			labels_create(chart);
+			labels_create(chart, settings.transitions ? 1000 : 0);
 
 			// Legends
 			legends_create(chart);
@@ -81,14 +82,24 @@ function scatterD3() {
 				.transition().duration(1000)
 				.call(dot_formatting, chart);
 		}
+  	// Caption
+		if (old_settings.caption != settings.caption) {
+			d3v6.select(svg.node().parentNode)
+		     .select(".scatterD3-caption")
+		     .selectAll("*")
+			 .remove();
+			svg.select(".caption-icon").remove()
+			caption_create(chart);
+		}
+
 		// Labels
 		if (!old_settings.has_labels && settings.has_labels) {
-			labels_create(chart);
+			labels_create(chart, settings);
 		}
 		// No more labels
 		if (old_settings.has_labels && !settings.has_labels) {
 			svg.selectAll(".point-label").remove();
-			svg.selectAll(".point-label-line").remove();		
+			svg.selectAll(".point-label-line").remove();
 		}
 		// Unit circle
 		if (!old_settings.unit_circle && settings.unit_circle) {
@@ -96,23 +107,23 @@ function scatterD3() {
 		}
 		// No more unit circle
 		if (old_settings.unit_circle && !settings.unit_circle) {
-			var circle = svg.select(".unit-circle");
+			const circle = svg.select(".unit-circle");
 			circle.transition().duration(1000)
 				.style("opacity", "0").remove();
 		}
 
 		// Zoom on
 		if (!settings.data_changed) zoom_on(chart, 1000);
-		if (settings.zoom_on === null && old_settings.zoom_on !== null) { 
-			reset_zoom(chart); 
-		} 
-	}; 
- 
- 
-	// Update data with transitions 
-	function update_data() { 
- 
-		dims = setup_dims(chart); 
+		if (settings.zoom_on === null && old_settings.zoom_on !== null) {
+			reset_zoom(chart);
+		}
+	};
+
+
+	// Update data with transitions
+	function update_data() {
+
+		dims = setup_dims(chart);
 		dims = setup_legend_dims(chart);
 		scales = setup_scales(chart);
 
@@ -123,19 +134,20 @@ function scatterD3() {
 		}
 
 		lasso_off(chart);
-		
+
 		// Change axes labels
 		svg.select(".x-axis-label").text(settings.xlab);
 		svg.select(".y-axis-label").text(settings.ylab);
-		
+
 		lines_update(chart);
 		unit_circle_update(chart);
 		dots_update(chart);
 		arrows_update(chart);
 		ellipses_update(chart);
-		labels_update(chart);
+		labels_update(chart, settings.transitions ? 1000 : 0);
+		label_lines_update(chart, settings.transitions ? 1000 : 0);
 		legends_update(chart);
-		
+
 	};
 
 
@@ -150,8 +162,8 @@ function scatterD3() {
 		scales.x_orig.range([0, dims.width]);
 		scales.y.range([dims.height, 0]);
 		scales.y_orig.range([dims.height, 0]);
-		scales.xAxis = d3v5.axisBottom(scales.x).tickSize(-dims.height);
-		scales.yAxis = d3v5.axisLeft(scales.y).tickSize(-dims.width);
+		scales.xAxis = d3v6.axisBottom(scales.x).tickSize(-dims.height);
+		scales.yAxis = d3v6.axisLeft(scales.y).tickSize(-dims.width);
 
 		svg.select(".root")
 			.attr("width", dims.width)
@@ -170,10 +182,10 @@ function scatterD3() {
 		svg.select(".x.axis").call(scales.xAxis);
 		svg.select(".y.axis").call(scales.yAxis);
 
-		var root = svg.select(".root");
+		const root = svg.select(".root");
 		zoom = zoom_behavior(chart);
 		root.call(zoom.transform,
-			d3v5.zoomTransform(svg.select(".root").node()));
+			d3v6.zoomTransform(svg.select(".root").node()));
 
 		legends_move(chart);
 		menu_move(chart);
@@ -185,33 +197,33 @@ function scatterD3() {
 	// Add controls handlers for shiny
 	chart.add_controls_handlers = function () {
 		// Zoom reset
-		d3v5.select("#" + settings.dom_id_reset_zoom)
+		d3v6.select("#" + settings.dom_id_reset_zoom)
 			.on("click", function() { reset_zoom(chart) });
 
 		// SVG export
-		d3v5.select("#" + settings.dom_id_svg_export)
+		d3v6.select("#" + settings.dom_id_svg_export)
 			.on("click", function () { export_svg(this, chart); });
 
 		// Lasso toggle
-		d3v5.select("#" + settings.dom_id_lasso_toggle)
+		d3v6.select("#" + settings.dom_id_lasso_toggle)
 			.on("click", function() { lasso_toggle(chart); });
 	};
 
 	chart.add_global_listeners = function () {
 		// Toogle zoom and lasso behaviors when shift is pressed
-		var parent = d3v5.select("#scatterD3-svg-" + settings.html_id).node().parentNode;
-		d3v5.select(parent)
+		const parent = d3v6.select("#scatterD3-svg-" + settings.html_id).node().parentNode;
+		d3v6.select(parent)
 			.attr("tabindex", 0)
-			.on("keydown", function () {
-				var key = d3v5.event.key !== undefined ? d3v5.event.key : d3v5.event.keyIdentifier;
+			.on("keydown", function (event) {
+				const key = event.key !== undefined ? event.key : event.keyIdentifier;
 				if (key == "Shift") {
 					if (settings.lasso) {
 						lasso_on(chart);
 					}
 				}
 			})
-			.on("keyup", function () {
-				var key = d3v5.event.key !== undefined ? d3v5.event.key : d3v5.event.keyIdentifier;
+			.on("keyup", function (event) {
+				const key = event.key !== undefined ? event.key : event.keyIdentifier;
 				if (key == "Shift") {
 					if (settings.lasso) {
 						lasso_off(chart);
@@ -244,6 +256,20 @@ function scatterD3() {
 			settings = value;
 			update_settings(old_settings);
 		}
+		return chart;
+	};
+
+	// labels positions getter/setter
+	chart.positions = function (value) {
+		if (!arguments.length) return positions;
+		positions = value;
+		return chart;
+	};
+
+	// dragging getter/setter
+	chart.dragging = function (value) {
+		if (!arguments.length) return dragging;
+		dragging = value;
 		return chart;
 	};
 
@@ -286,7 +312,6 @@ function scatterD3() {
 		return zoom;
 	}
 
-
 	return chart;
 }
 
@@ -303,7 +328,7 @@ HTMLWidgets.widget({
 		if (width < 0) width = 0;
 		if (height < 0) height = 0;
 		// Create root svg element
-		var svg = d3v5.select(el).append("svg");
+		var svg = d3v6.select(el).append("svg");
 		svg
 			.attr("width", width)
 			.attr("height", height)
@@ -315,30 +340,30 @@ HTMLWidgets.widget({
 				".scatterD3 .axis text { fill: #000; }");
 
 		// Create tooltip content div
-		var tooltip = d3v5.select(".scatterD3-tooltip");
+		let tooltip = d3v6.select(".scatterD3-tooltip");
 		if (tooltip.empty()) {
-			tooltip = d3v5.select("body")
+			tooltip = d3v6.select("body")
 				.append("div")
 				.style("visibility", "hidden")
 				.attr("class", "scatterD3-tooltip");
 		}
 
 		// Create title and subtitle div
-		var caption = d3v5.select(el).select(".scatterD3-caption");
+		let caption = d3v6.select(el).select(".scatterD3-caption");
 		if (caption.empty()) {
-			caption = d3v5.select(el).append("div")
+			caption = d3v6.select(el).append("div")
 				.attr("class", "scatterD3-caption");
 		}
 
 		// Create menu div
-		var menu = d3v5.select(el).select(".scatterD3-menu");
+		let menu = d3v6.select(el).select(".scatterD3-menu");
 		if (menu.empty()) {
-			menu = d3v5.select(el).append("ul")
+			menu = d3v6.select(el).append("ul")
 				.attr("class", "scatterD3-menu");
 		}
 
 		// Create scatterD3 instance
-		var scatter = scatterD3().width(width).height(height).svg(svg);
+		let scatter = scatterD3().width(width).height(height).svg(svg);
 
 		return ({
 			resize: function (width, height) {
@@ -346,7 +371,7 @@ HTMLWidgets.widget({
 				if (width < 0) width = 0;
 				if (height < 0) height = 0;
 				// resize root svg element
-				var svg = d3v5.select(el).select("svg");
+				const svg = d3v6.select(el).select("svg");
 				svg
 					.attr("width", width)
 					.attr("height", height);
@@ -356,13 +381,18 @@ HTMLWidgets.widget({
 
 			renderValue: function (obj) {
 				// Check if update or redraw
-				var first_draw = (Object.keys(scatter.settings()).length === 0);
-				var redraw = first_draw || !obj.settings.transitions;
-				var svg = d3v5.select(el).select("svg").attr("id", "scatterD3-svg-" + obj.settings.html_id);
+				const first_draw = (Object.keys(scatter.settings()).length === 0);
+				const redraw = first_draw || !obj.settings.transitions;
+				const svg = d3v6.select(el).select("svg")
+				const menu = d3v6.select(el).select(".scatterD3-menu");
+				// Set or update html_id for svg and menu
+				svg.attr("id", "scatterD3-svg-" + obj.settings.html_id);
+				menu.attr("id", "scatterD3-menu-" + obj.settings.html_id);
+
 				scatter = scatter.svg(svg);
 
 				// convert data to d3 format
-				var data = HTMLWidgets.dataframeToD3(obj.data);
+				const data = HTMLWidgets.dataframeToD3(obj.data);
 				if (obj.settings.labels_positions) {
 					if (obj.settings.labels_positions != "auto") {
 						obj.settings.labels_positions = HTMLWidgets.dataframeToD3(obj.settings.labels_positions);
@@ -378,26 +408,31 @@ HTMLWidgets.widget({
 
 				// Complete draw
 				if (redraw) {
+					data.label_lines = new Array();
 					scatter = scatter.data(data, redraw);
 					obj.settings.redraw = true;
+					// Create array to hold manual (drag) or automatic label positions
+					scatter = scatter.positions(new Array(data.length));
 					scatter = scatter.settings(obj.settings, redraw);
 					// add controls handlers and global listeners for shiny apps
 					scatter.add_controls_handlers();
 					scatter.add_global_listeners();
 					// draw chart
-					d3v5.select(el)
+					d3v6.select(el)
 						.call(scatter);
 				}
 				// Update only
 				else {
 					// Array equality test
 					function array_equal(a1, a2) {
-						return a1.length == a2.length && a1.every(function (v, i) { return v === a2[i]; });
+						return a1.length == a2.length && a1.every((v, i) => v === a2[i]);
 					}
-					function object_equal(o1, o2) {
-						var keys_equal = array_equal(d3v5.keys(o1), d3v5.keys(o2));
-						var values_equal = array_equal(d3v5.values(o1), d3v5.values(o2));
-						return keys_equal && values_equal;
+					function object_equal(x, y) {
+					  const ok = Object.keys, tx = typeof x, ty = typeof y;
+            return x && y && tx === 'object' && tx === ty ? (
+              ok(x).length === ok(y).length &&
+              ok(x).every(key => deepEqual(x[key], y[key]))
+            ) : (x === y);
 					}
 
 					// Check what did change
@@ -405,7 +440,7 @@ HTMLWidgets.widget({
 					obj.settings.has_labels_changed = scatter.settings().has_labels != obj.settings.has_labels;
 					obj.settings.size_range_changed = !array_equal(scatter.settings().size_range, obj.settings.size_range);
 					obj.settings.ellipses_changed = scatter.settings().ellipses != obj.settings.ellipses;
-					
+
 					if (Array.isArray(scatter.settings().colors) && Array.isArray(obj.settings.colors)) {
 						obj.settings.colors_changed = !array_equal(scatter.settings().colors, obj.settings.colors);
 					} else {
@@ -421,7 +456,7 @@ HTMLWidgets.widget({
 					} else {
 						obj.settings.opacities_changed = scatter.settings().opacities != obj.settings.opacities;
 					}
-					
+
 					obj.settings.x_log_changed = scatter.settings().x_log != obj.settings.x_log;
 					obj.settings.y_log_changed = scatter.settings().y_log != obj.settings.y_log;
 					obj.settings.xlim_changed = scatter.settings().xlim != obj.settings.xlim;
@@ -432,9 +467,9 @@ HTMLWidgets.widget({
 					obj.settings.had_symbol_var = scatter.settings().has_symbol_var;
 					obj.settings.had_size_var = scatter.settings().has_size_var;
 
-					function changed(varname) {
-						return obj.settings.hashes[varname] != scatter.settings().hashes[varname];
-					};
+					let changed = (varname) => (
+						obj.settings.hashes[varname] != scatter.settings().hashes[varname]
+					);
 					obj.settings.x_changed = changed("x");
 					obj.settings.y_changed = changed("y");
 					obj.settings.lab_changed = changed("lab");
@@ -449,6 +484,31 @@ HTMLWidgets.widget({
 						obj.settings.size_changed;
 
 					obj.settings.labels_positions_changed = changed("labels_positions");
+
+					// If labels positions arg has not changed, get old ones
+					if (obj.settings.labels_positions_changed) {
+						data.label_lines = new Array();
+						obj.positions = new Array()
+					} else {
+						const data_keys = [...new Set(data.map(d => d.key_var))]
+						data.label_lines = scatter.data().label_lines
+						// remove label lines if label not here anymore
+						data.label_lines = data.label_lines.filter(d => (data_keys.includes(d.key_var)));
+						// Update label lines data with new x and y data
+						data.label_lines = data.label_lines.map(d => {
+							const key = d.key_var
+							const cur_data = data.filter(d => (d.key_var == key))[0]
+							d.x = cur_data.x
+							d.y = cur_data.y
+							d.col_var = cur_data.col_var
+							d.symbol_var = cur_data.symbol_var
+							return d
+						})
+						obj.positions = scatter.positions();
+						obj.positions = obj.positions.filter(d => (data_keys.includes(d.key_var)));
+
+					}
+
 
 					obj.settings.data_changed = obj.settings.x_changed ||
 						obj.settings.y_changed ||
@@ -466,8 +526,13 @@ HTMLWidgets.widget({
 						obj.settings.opacities_changed ||
 						changed("lines");
 
-					// Update settings
+					obj.settings.positions_changed =
+						obj.settings.has_labels_changed ||
+						obj.settings.labels_positions_changed;
+
+					// Update settings and positions
 					scatter = scatter.settings(obj.settings, redraw);
+					scatter = scatter.positions(obj.positions);
 					// Update data only if needed
 					if (obj.settings.data_changed) scatter = scatter.data(data, redraw);
 				}

@@ -1,3 +1,10 @@
+# scatterD3 0.9.2
+
+* Upgrade to d3 6.2.0
+* Take levels order into account when a variable is a factor (thanks @sharvarinarendra)
+* Fix label lines updating (thanks @Tixierae)
+* Fix caption not updated (thanks @damirpolat)
+
 # scatterD3 0.9.1
 
 * New `init_callback` argument for (undocumented) callback on scatter object after init or update

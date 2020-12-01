@@ -234,7 +234,7 @@ scatterD3(data = mtcars, x = wt, y = mpg,
   init_callback = "function() {
     var scales = this.scales();
     var svg = this.svg();
-    new_x_axis = scales.xAxis.tickFormat(d3v5.format(',.0%'));
+    new_x_axis = scales.xAxis.tickFormat(d3v6.format(',.0%'));
     svg.select('.x.axis').call(new_x_axis);
   }"
 )

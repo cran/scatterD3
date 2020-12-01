@@ -117,10 +117,8 @@
 #' fading effects in legend. Additional handlers are provided to change label
 #' size, point opacity or export the figure as an SVG file via HTML form controls.
 #'
-#' @author Julien Barnier <julien.barnier@@ens-lyon.fr>
-#'
 #' @source
-#' D3.js was created by Michael Bostock. See \url{http://d3js.org/}
+#' D3.js was created by Michael Bostock. See \url{https://d3js.org/}
 #'
 #' @examples
 #' scatterD3(x = mtcars$wt, y = mtcars$mpg, data=NULL, lab = rownames(mtcars),
@@ -228,6 +226,9 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
 
     x_categorical <- is.factor(x) || !is.numeric(x)
     y_categorical <- is.factor(y) || !is.numeric(y)
+    x_levels <- levels(x)
+    y_levels <- levels(y)
+
 
     ## No negative values and no 0 lines if logarithmic scales
     if (x_log) {
@@ -437,6 +438,8 @@ scatterD3 <- function(x, y, data = NULL, lab = NULL,
         ylim = ylim,
         x_categorical = x_categorical,
         y_categorical = y_categorical,
+        x_levels = x_levels,
+        y_levels = y_levels,
         menu = menu,
         lasso = lasso,
         lasso_callback = htmlwidgets::JS(lasso_callback),
