@@ -1,8 +1,8 @@
 Package: scatterD3
 Type: Package
 Title: D3 JavaScript Scatterplot from R
-Version: 1.0.0
-Date: 2021-06-24
+Version: 1.0.1
+Date: 2021-10-06
 Authors@R: c(
     person(
       "Julien", "Barnier",
@@ -17,12 +17,12 @@ Authors@R: c(
     person(
         "Mike", "Bostock"
         , role = c("aut", "cph")
-        , comment = "d3.js library, http://d3js.org"
+        , comment = "d3.js library, https://d3js.org"
     ),
     person(
         "Susie", "Lu"
         , role = c("aut", "cph")
-        , comment = "d3-legend library, http://d3-legend.susielu.com/"
+        , comment = "d3-legend library, https://d3-legend.susielu.com/"
     ),
     person(
         "Speros", "Kokenes"
@@ -48,14 +48,14 @@ Imports: htmlwidgets, digest, ellipse
 Suggests: knitr, rmarkdown
 RoxygenNote: 7.1.1
 NeedsCompilation: no
-Packaged: 2021-06-24 09:51:45 UTC; julien
+Packaged: 2021-10-06 08:56:19 UTC; julien
 Author: Julien Barnier [aut, cre],
   Kent Russell [aut, ctb],
-  Mike Bostock [aut, cph] (d3.js library, http://d3js.org),
-  Susie Lu [aut, cph] (d3-legend library, http://d3-legend.susielu.com/),
+  Mike Bostock [aut, cph] (d3.js library, https://d3js.org),
+  Susie Lu [aut, cph] (d3-legend library, https://d3-legend.susielu.com/),
   Speros Kokenes [aut, cph] (d3-lasso-plugin library,
     https://github.com/skokenes/D3-Lasso-Plugin),
   Evan Wang [aut, cph] (d3-labeler plugin,
     https://github.com/tinker10/D3-Labeler)
 Repository: CRAN
-Date/Publication: 2021-06-24 10:20:02 UTC
+Date/Publication: 2021-10-06 09:30:01 UTC
